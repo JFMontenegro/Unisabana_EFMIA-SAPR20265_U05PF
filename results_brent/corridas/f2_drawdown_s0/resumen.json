@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f2_drawdown_s0",
+  "mercado": "brent",
+  "recompensa": "drawdown",
+  "semilla": 0,
+  "pasos": 150000,
+  "bootstrap": true,
+  "mejor_val_retorno": 0.35837167042223683,
+  "minutos": 4.639645373821258,
+  "carpeta": "/home/claude/inv/results/corridas/f2_drawdown_s0"
+}

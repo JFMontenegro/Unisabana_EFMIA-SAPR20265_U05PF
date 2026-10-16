@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f5_final_s1",
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "semilla": 1,
+  "pasos": 120000,
+  "bootstrap": true,
+  "mejor_val_retorno": 2.979733908770492,
+  "minutos": 4.597457472483317,
+  "carpeta": "/home/claude/inv/results/corridas/f5_final_s1"
+}

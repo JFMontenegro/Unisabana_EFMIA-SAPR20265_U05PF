@@ -1,0 +1,89 @@
+{
+  "mercado": "brent",
+  "recompensa": "sharpe_dif",
+  "pasos": 150000,
+  "semilla": 1,
+  "bootstrap": true,
+  "largo_bloque": 21,
+  "agente": {
+    "oculta": 128,
+    "capas": 2,
+    "gamma": 0.99,
+    "lr": 0.0005,
+    "decaimiento_pesos": 0.0001,
+    "lote": 64,
+    "capacidad": 200000,
+    "calentamiento": 5000,
+    "actualizar_cada": 1,
+    "objetivo_cada": 1000,
+    "epsilon_inicial": 1.0,
+    "epsilon_final": 0.05,
+    "epsilon_pasos": 60000,
+    "doble_dqn": true,
+    "recorte_gradiente": 10.0,
+    "semilla": 1
+  },
+  "entorno": {
+    "costo": 0.001,
+    "recompensa": "sharpe_dif",
+    "lambda_drawdown": 10.0,
+    "eta_sharpe": 0.02,
+    "largo_episodio": 252,
+    "aleatorizar_inicio": true,
+    "exposicion_inicial": 0.0,
+    "escala_recompensa": 100.0,
+    "semilla": 1
+  },
+  "particion": {
+    "entrenamiento": [
+      "1987-01-01",
+      "2013-12-31"
+    ],
+    "validacion": [
+      "2014-01-01",
+      "2018-12-31"
+    ],
+    "prueba": [
+      "2019-01-01",
+      "2026-12-31"
+    ]
+  },
+  "escalador": {
+    "nombres": [
+      "ret_1",
+      "ret_5",
+      "ret_21",
+      "vol_21",
+      "razon_vol",
+      "dist_sma_21",
+      "dist_sma_63",
+      "rsi_14",
+      "drawdown_252",
+      "pos_rango_252"
+    ],
+    "medias": [
+      0.0003391096742417781,
+      0.0016997142904333472,
+      0.007102274954135547,
+      0.022460117261430042,
+      -0.11496134637699491,
+      0.003393681199903531,
+      0.010591461073838635,
+      0.01606566923298949,
+      -0.23426040285160896,
+      0.04463393181657765
+    ],
+    "desviaciones": [
+      0.025197714610891275,
+      0.05619411397338654,
+      0.11303513542082465,
+      0.011485631925199427,
+      0.3791771780200392,
+      0.06285674448094415,
+      0.11402492064057114,
+      0.12665221408833927,
+      0.24199906904600063,
+      0.30774108417884555
+    ]
+  }
+}

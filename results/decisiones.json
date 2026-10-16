@@ -1,0 +1,136 @@
+{
+  "pasos_por_corrida": 120000,
+  "fase3": {
+    "elegido": "sharpe_dif",
+    "criterio": "retorno medio en validación entre semillas",
+    "tabla": {
+      "sharpe_dif": {
+        "mean": 0.7640210222,
+        "std": 0.3160649139,
+        "count": 2,
+        "max": 0.9875126661
+      },
+      "log_neto": {
+        "mean": 0.6638094651,
+        "std": 0.1134203149,
+        "count": 2,
+        "max": 0.7440097389
+      },
+      "drawdown": {
+        "mean": 0.3053506101,
+        "std": 0.4236561269,
+        "count": 2,
+        "max": 0.6049207303
+      }
+    }
+  },
+  "fase4": {
+    "elegido": "pequena",
+    "config": {
+      "oculta": 32,
+      "capas": 1,
+      "decaimiento_pesos": 0.01
+    },
+    "criterio": "retorno medio en validación entre semillas",
+    "tabla": {
+      "pequena": {
+        "mean": 2.2058812447,
+        "std": 1.0943929329,
+        "count": 2,
+        "max": 2.9797339088
+      },
+      "minima": {
+        "mean": 1.6761878744,
+        "std": 0.305670534,
+        "count": 2,
+        "max": 1.8923295818
+      },
+      "mediana": {
+        "mean": 1.0324950575,
+        "std": 0.0019342472,
+        "count": 2,
+        "max": 1.0338627769
+      },
+      "grande": {
+        "mean": 0.7640210222,
+        "std": 0.3160649139,
+        "count": 2,
+        "max": 0.9875126661
+      }
+    }
+  },
+  "fase5": {
+    "recompensa": "sharpe_dif",
+    "config": {
+      "oculta": 32,
+      "capas": 1,
+      "decaimiento_pesos": 0.01
+    },
+    "frecuencia_decision": 1,
+    "semillas": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "val_retorno": [
+      1.4320285805578772,
+      2.979733908770492,
+      1.9187930467616576,
+      0.79493841040595,
+      2.399995904064297
+    ],
+    "val_retorno_medio": 1.9050979701120547,
+    "val_rotacion_media": 343.2715781157417
+  },
+  "fase6": {
+    "elegido": 1,
+    "criterio": "retorno medio en validación entre semillas",
+    "tabla": {
+      "1": {
+        "mean": 2.2058812447,
+        "std": 1.0943929329,
+        "count": 2,
+        "max": 2.9797339088
+      },
+      "24": {
+        "mean": 2.1995866345,
+        "std": 0.2071914685,
+        "count": 2,
+        "max": 2.3460931269
+      },
+      "168": {
+        "mean": 0.8405118142,
+        "std": 0.3207188434,
+        "count": 2,
+        "max": 1.0672942832
+      }
+    }
+  },
+  "fase7": {
+    "recompensa": "sharpe_dif",
+    "config": {
+      "oculta": 32,
+      "capas": 1,
+      "decaimiento_pesos": 0.01
+    },
+    "frecuencia_decision": 1,
+    "semillas": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "val_retorno": [
+      1.4320285805578772,
+      2.979733908770492,
+      1.9187930467616576,
+      0.79493841040595,
+      2.399995904064297
+    ],
+    "val_retorno_medio": 1.9050979701120547,
+    "val_rotacion_media": 343.2715781157417
+  }
+}

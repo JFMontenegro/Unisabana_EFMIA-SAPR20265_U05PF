@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f1_sharpe_dif_s0",
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "semilla": 0,
+  "pasos": 120000,
+  "bootstrap": false,
+  "mejor_val_retorno": 0.41645134526885474,
+  "minutos": 6.29140252272288,
+  "carpeta": "/home/claude/inv/results/corridas/f1_sharpe_dif_s0"
+}

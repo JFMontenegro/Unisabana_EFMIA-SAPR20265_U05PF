@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f6_cada1_s1",
+  "mercado": "brent",
+  "recompensa": "log_neto",
+  "semilla": 1,
+  "pasos": 150000,
+  "bootstrap": true,
+  "mejor_val_retorno": -0.0025482938118616127,
+  "minutos": 3.2700409571329754,
+  "carpeta": "/home/claude/inv/results/corridas/f6_cada1_s1"
+}

@@ -1,0 +1,7 @@
+etiqueta,mercado,recompensa,semilla,pasos,bootstrap,mejor_val_retorno,minutos,carpeta
+f3_log_neto_s0,btc,log_neto,0,120000,True,0.5836091913837929,6.593278209368388,/home/claude/inv/results/corridas/f3_log_neto_s0
+f3_log_neto_s1,btc,log_neto,1,120000,True,0.7440097388978304,6.809104597568512,/home/claude/inv/results/corridas/f3_log_neto_s1
+f3_drawdown_s0,btc,drawdown,0,120000,True,0.005780489847224013,6.366707988580068,/home/claude/inv/results/corridas/f3_drawdown_s0
+f3_drawdown_s1,btc,drawdown,1,120000,True,0.6049207302953488,6.5945987145105995,/home/claude/inv/results/corridas/f3_drawdown_s1
+f3_sharpe_dif_s0,btc,sharpe_dif,0,120000,True,0.5405293782319811,6.394771905740102,/home/claude/inv/results/corridas/f3_sharpe_dif_s0
+f3_sharpe_dif_s1,btc,sharpe_dif,1,120000,True,0.9875126660873172,6.682518935203552,/home/claude/inv/results/corridas/f3_sharpe_dif_s1

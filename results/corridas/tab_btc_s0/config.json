@@ -1,0 +1,51 @@
+{
+  "algoritmo": "Q-Learning tabular",
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "pasos": 120000,
+  "semilla": 0,
+  "bootstrap": true,
+  "largo_bloque": 72,
+  "deriva_aleatoria": 0.25,
+  "indicadores_usados": [
+    "razon_vol",
+    "dist_sma_larga",
+    "ret_medio"
+  ],
+  "agente": {
+    "cortes": 4,
+    "gamma": 0.99,
+    "lr": 0.1,
+    "epsilon_inicial": 1.0,
+    "epsilon_final": 0.05,
+    "epsilon_pasos": 60000,
+    "optimista": 0.0,
+    "semilla": 0
+  },
+  "entorno": {
+    "costo": 0.001,
+    "recompensa": "sharpe_dif",
+    "lambda_drawdown": 10.0,
+    "eta_sharpe": 0.02,
+    "frecuencia_decision": 1,
+    "largo_episodio": 720,
+    "aleatorizar_inicio": true,
+    "exposicion_inicial": 0.0,
+    "escala_recompensa": 100.0,
+    "semilla": 0
+  },
+  "particion": {
+    "entrenamiento": [
+      "2018-05-15",
+      "2020-10-31"
+    ],
+    "validacion": [
+      "2020-11-01",
+      "2021-05-31"
+    ],
+    "prueba": [
+      "2021-06-01",
+      "2022-12-31"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "etiqueta": "ppo_btc_s2",
+  "algoritmo": "PPO",
+  "mercado": "btc",
+  "semilla": 2,
+  "pasos": 120000,
+  "mejor_val_retorno": 0.5654651262658232,
+  "minutos": 2.7150065779685972
+}

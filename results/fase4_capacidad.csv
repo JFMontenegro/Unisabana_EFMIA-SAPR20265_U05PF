@@ -1,0 +1,9 @@
+etiqueta,mercado,recompensa,semilla,pasos,bootstrap,mejor_val_retorno,minutos,carpeta
+f4_grande_s0,btc,sharpe_dif,0,120000,True,0.5405293782319811,6.459815927346548,/home/claude/inv/results/corridas/f4_grande_s0
+f4_grande_s1,btc,sharpe_dif,1,120000,True,0.9875126660873172,6.610438660780589,/home/claude/inv/results/corridas/f4_grande_s1
+f4_mediana_s0,btc,sharpe_dif,0,120000,True,1.0311273381981536,5.497094269593557,/home/claude/inv/results/corridas/f4_mediana_s0
+f4_mediana_s1,btc,sharpe_dif,1,120000,True,1.0338627768624504,5.689635825157166,/home/claude/inv/results/corridas/f4_mediana_s1
+f4_pequena_s0,btc,sharpe_dif,0,120000,True,1.4320285805578772,4.566644752025605,/home/claude/inv/results/corridas/f4_pequena_s0
+f4_pequena_s1,btc,sharpe_dif,1,120000,True,2.979733908770492,4.704630255699158,/home/claude/inv/results/corridas/f4_pequena_s1
+f4_minima_s0,btc,sharpe_dif,0,120000,True,1.4600461669624751,4.391962877909342,/home/claude/inv/results/corridas/f4_minima_s0
+f4_minima_s1,btc,sharpe_dif,1,120000,True,1.8923295817919108,4.6289258400599165,/home/claude/inv/results/corridas/f4_minima_s1

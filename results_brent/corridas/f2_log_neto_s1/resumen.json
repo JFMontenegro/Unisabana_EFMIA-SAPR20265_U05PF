@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f2_log_neto_s1",
+  "mercado": "brent",
+  "recompensa": "log_neto",
+  "semilla": 1,
+  "pasos": 150000,
+  "bootstrap": true,
+  "mejor_val_retorno": -0.4610813647918077,
+  "minutos": 4.927545706431071,
+  "carpeta": "/home/claude/inv/results/corridas/f2_log_neto_s1"
+}

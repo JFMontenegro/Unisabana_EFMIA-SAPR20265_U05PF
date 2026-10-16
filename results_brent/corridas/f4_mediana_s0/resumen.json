@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f4_mediana_s0",
+  "mercado": "brent",
+  "recompensa": "log_neto",
+  "semilla": 0,
+  "pasos": 150000,
+  "bootstrap": true,
+  "mejor_val_retorno": 0.34435024520597457,
+  "minutos": 3.679846509297689,
+  "carpeta": "/home/claude/inv/results/corridas/f4_mediana_s0"
+}

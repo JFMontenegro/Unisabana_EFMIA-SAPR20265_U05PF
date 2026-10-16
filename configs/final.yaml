@@ -1,0 +1,73 @@
+# Configuración final del agente que se reporta en el README §7.
+#
+# Cada línea se decidió en las fases 3 a 7 usando EXCLUSIVAMENTE el tramo de
+# validación (nov-2020 → may-2021). El tramo de prueba se leyó una sola vez,
+# después, con esta configuración ya congelada.
+#
+# La cadena completa de decisiones, con los números que las justificaron, está
+# en results/decisiones.json.
+
+mercado: btc
+fuente: >
+  BTC/USD horario — examples/data/BTC_USD-Hourly.csv del repositorio de
+  Gym Trading Env (ClementPerroud), la fuente señalada por el profesor.
+particion: ver configs/base.yaml   # congelada el 15-oct-2026
+
+entorno:
+  acciones: [0.0, 0.5, 1.0]
+  costo: 0.0010                    # 10 bps = comisión taker spot de Binance
+  recompensa: sharpe_dif           # fase 3 — ganó por 10 pp sobre log_neto, dentro del ruido
+  frecuencia_decision: 1           # fase 6 — ganó por 0.6 pp sobre decidir cada 24 barras
+  largo_episodio: 720              # un mes de barras horarias
+  escala_recompensa: 100.0
+
+bootstrap:
+  activo: true                     # fase 2: sin esto el agente memoriza (6 319× en entrenamiento)
+  largo_bloque: 72                 # tres días; ~1/10 del episodio
+  deriva_aleatoria: 0.25           # fase 3: sin esto hereda la deriva alcista de la fuente
+
+agente:                            # fase 4 — 483 parámetros
+  oculta: 32
+  capas: 1
+  decaimiento_pesos: 0.01
+  gamma: 0.99
+  lr: 0.0005
+  lote: 64
+  capacidad: 200000
+  calentamiento: 5000
+  objetivo_cada: 1000
+  epsilon_inicial: 1.0
+  epsilon_final: 0.05
+  epsilon_pasos: 60000
+  doble_dqn: true
+  recorte_gradiente: 10.0
+
+entrenamiento:
+  pasos: 120000
+  eval_cada: 10000
+  semillas: [0, 1, 2, 3, 4]        # fase 7
+
+modelo_reportado:
+  tipo: comité
+  definicion: promedio de Q(s,·) sobre las cinco semillas, acción = argmax
+  justificacion: >
+    La desviación entre semillas en validación (±85 pp) es del mismo orden que
+    el efecto de cualquier decisión de diseño evaluada. Escoger el mejor
+    checkpoint de la mejor semilla equivale a elegir el ganador de una lotería
+    de ~60 candidatos. El comité es una decisión única, declarada antes de leer
+    el tramo de prueba.
+  pesos: results/comite/semilla_{0..4}.pt
+  verificacion: >
+    En prueba, el comité rindió -10.7 % y el individuo elegido por validación
+    -4.4 %. En la réplica sobre el Brent la diferencia fue de +141 pp a favor
+    del comité. La predicción se cumplió en un mercado y falló en el otro; ver
+    README §7.3.
+
+advertencia_declarada: >
+  El criterio de selección (retorno acumulado en validación) resultó ciego al
+  costo de transacción, porque el tramo de validación sube 172 % en siete meses
+  y ahí 41 % anual en comisiones no se nota. Eligió decidir cada barra frente a
+  cada 24 barras por 0.6 pp, con cinco veces más varianza y ocho veces más
+  rotación. Está analizado en README §6.5 y es la limitación principal del
+  diseño. No se re-eligió después de ver el test: eso habría sido una segunda
+  lectura del conjunto de prueba.

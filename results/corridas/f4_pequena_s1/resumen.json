@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f4_pequena_s1",
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "semilla": 1,
+  "pasos": 120000,
+  "bootstrap": true,
+  "mejor_val_retorno": 2.979733908770492,
+  "minutos": 4.704630255699158,
+  "carpeta": "/home/claude/inv/results/corridas/f4_pequena_s1"
+}

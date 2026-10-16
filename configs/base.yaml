@@ -1,0 +1,83 @@
+# Configuración de referencia del proyecto.
+#
+# Este archivo documenta los valores con los que se corrieron los experimentos.
+# La fuente de verdad ejecutable son las clases `ConfigEntorno` (src/environment.py)
+# y `Config` (src/agent.py); cada corrida guarda su propia copia resuelta en
+# results/corridas/<etiqueta>/config.json, que es lo que hay que leer para
+# reproducir un resultado concreto.
+
+datos:
+  mercado: btc
+  fuente: >
+    BTC/USD horario — examples/data/BTC_USD-Hourly.csv del repositorio de
+    Gym Trading Env, la fuente señalada por el profesor. 33 259 barras.
+  replicas:
+    - brent    # EIA, spot diario, 9 102 barras desde 1987 (apéndice A)
+    - sp500m   # S&P 500 mensual de Shiller, 1871-2026
+
+# Particiones congeladas antes del análisis exploratorio de cada mercado
+# (BTC el 15-oct-2026, Brent el 14-oct-2026). No se modifican: cambiarlas
+# invalida todos los resultados reportados.
+particion_btc:
+  entrenamiento: ["2018-05-15", "2020-10-31"]   # 20 875 barras operables
+  validacion:    ["2020-11-01", "2021-05-31"]   #  5 065 barras operables
+  prueba:        ["2021-06-01", "2022-12-31"]   #  6 553 barras operables
+
+particion_brent:
+  entrenamiento: ["1987-01-01", "2013-12-31"]   # 5 863 obs
+  validacion:    ["2014-01-01", "2018-12-31"]   # 1 271 obs
+  prueba:        ["2019-01-01", "2026-12-31"]   # 1 968 obs
+
+entorno:
+  acciones: [0.0, 0.5, 1.0]        # fracción del capital expuesta al activo
+  costo: 0.0010                    # 10 bps sobre |cambio de exposición|
+  recompensa: sharpe_dif           # log_neto | drawdown | sharpe_dif
+  lambda_drawdown: 10.0            # solo aplica a la recompensa 'drawdown'
+  eta_sharpe: 0.02                 # solo aplica a 'sharpe_dif'
+  frecuencia_decision: 1           # barras entre dos decisiones
+  largo_episodio: 720              # BTC: un mes de barras horarias (Brent: 252)
+  escala_recompensa: 100.0         # log-retornos por barra ~1e-2 → la red ve ~1e0
+  calentamiento_indicadores: 720   # BTC (Brent: 252); barras previas que no se operan
+
+bootstrap:
+  activo: true                     # entrenar sobre trayectorias remuestreadas
+  largo_bloque: 72                 # BTC: tres días (Brent: 21). Preserva agrupamiento de volatilidad
+  deriva_aleatoria: 0.25           # desviación anualizada de la deriva sorteada por episodio
+
+agente:
+  arquitectura: MLP
+  oculta: 32
+  capas: 1
+  gamma: 0.99
+  lr: 0.0005
+  decaimiento_pesos: 0.01
+  lote: 64
+  capacidad_replay: 200000
+  calentamiento: 5000
+  objetivo_cada: 1000
+  epsilon_inicial: 1.0
+  epsilon_final: 0.05
+  epsilon_pasos: 60000
+  doble_dqn: true
+  recorte_gradiente: 10.0
+
+entrenamiento:
+  pasos: 120000
+  eval_cada: 10000
+  semillas: [0, 1, 2, 3, 4]
+  criterio_de_seleccion: retorno acumulado en validación
+
+evaluacion:
+  tramo: prueba
+  modo: greedy, una sola pasada
+  semillas_aleatorias: 30
+  nota_lineas_base: >
+    Corren a su frecuencia natural (cada barra), no a la del agente. Cuando el
+    agente decide con menos frecuencia se añade además una aleatoria igualada a
+    su frecuencia, para separar «el agente sabe algo» de «el agente opera poco».
+  lineas_base:
+    - Comprar y mantener
+    - Cruce de medias
+    - 50 % fijo
+    - Todo en efectivo
+    - Aleatoria

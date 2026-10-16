@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f7_final_s3",
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "semilla": 3,
+  "pasos": 120000,
+  "bootstrap": true,
+  "mejor_val_retorno": 0.79493841040595,
+  "minutos": 4.653789893786112,
+  "carpeta": "/home/claude/inv/results/corridas/f7_final_s3"
+}

@@ -1,0 +1,134 @@
+{
+  "pasos_por_corrida": 150000,
+  "fase3": {
+    "elegido": "log_neto",
+    "criterio": "retorno medio en validación entre semillas",
+    "tabla": {
+      "log_neto": {
+        "mean": 0.0928438678,
+        "std": 0.267553652,
+        "count": 2,
+        "max": 0.2820328694
+      },
+      "drawdown": {
+        "mean": 0.0792547527,
+        "std": 0.3348344104,
+        "count": 2,
+        "max": 0.3160184348
+      },
+      "sharpe_dif": {
+        "mean": -0.2024354546,
+        "std": 0.3648690217,
+        "count": 2,
+        "max": 0.0555659049
+      }
+    }
+  },
+  "fase4": {
+    "elegido": "minima",
+    "config": {
+      "oculta": 16,
+      "capas": 1,
+      "decaimiento_pesos": 0.01
+    },
+    "criterio": "retorno medio en validación entre semillas",
+    "tabla": {
+      "minima": {
+        "mean": 0.3951446114,
+        "std": 0.5624227002,
+        "count": 2,
+        "max": 0.7928375166
+      },
+      "pequena": {
+        "mean": 0.1987343247,
+        "std": 0.0653061218,
+        "count": 2,
+        "max": 0.2449127263
+      },
+      "grande": {
+        "mean": 0.0928438678,
+        "std": 0.267553652,
+        "count": 2,
+        "max": 0.2820328694
+      },
+      "mediana": {
+        "mean": 0.0145618757,
+        "std": 0.4663911849,
+        "count": 2,
+        "max": 0.3443502452
+      }
+    }
+  },
+  "fase5": {
+    "recompensa": "log_neto",
+    "config": {
+      "oculta": 16,
+      "capas": 1,
+      "decaimiento_pesos": 0.01
+    },
+    "semillas": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "val_retorno": [
+      0.7928375166417101,
+      -0.0025482938118616127,
+      -0.14122213627286972,
+      -0.4035648315181619,
+      0.0937346461608739
+    ],
+    "val_retorno_medio": 0.06784738023993815
+  },
+  "fase6": {
+    "elegido": 5,
+    "criterio": "retorno medio en validación entre semillas",
+    "tabla": {
+      "5": {
+        "mean": 0.3970043083,
+        "std": 0.1427630765,
+        "count": 2,
+        "max": 0.4979530478
+      },
+      "1": {
+        "mean": 0.3951446114,
+        "std": 0.5624227002,
+        "count": 2,
+        "max": 0.7928375166
+      },
+      "21": {
+        "mean": 0.2892460171,
+        "std": 0.203603968,
+        "count": 2,
+        "max": 0.4332157636
+      }
+    }
+  },
+  "fase7": {
+    "recompensa": "log_neto",
+    "config": {
+      "oculta": 16,
+      "capas": 1,
+      "decaimiento_pesos": 0.01
+    },
+    "frecuencia_decision": 5,
+    "semillas": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "val_retorno": [
+      0.29605556878852624,
+      0.4979530477999152,
+      0.21469733842899585,
+      -0.3861050436983857,
+      0.0990170103984036
+    ],
+    "val_retorno_medio": 0.14432358434349105,
+    "val_rotacion_media": 27.28510638297873
+  }
+}

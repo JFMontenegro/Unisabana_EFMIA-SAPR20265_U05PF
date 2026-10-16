@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f1_drawdown_s1",
+  "mercado": "btc",
+  "recompensa": "drawdown",
+  "semilla": 1,
+  "pasos": 120000,
+  "bootstrap": false,
+  "mejor_val_retorno": 0.31796414432670916,
+  "minutos": 6.376102304458618,
+  "carpeta": "/home/claude/inv/results/corridas/f1_drawdown_s1"
+}

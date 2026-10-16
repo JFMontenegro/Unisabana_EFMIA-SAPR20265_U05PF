@@ -1,0 +1,16 @@
+{
+  "paso": 80000,
+  "retorno_acumulado": 0.005780489847224013,
+  "retorno_anualizado": 0.010022497121774165,
+  "max_drawdown": -0.20762262609927307,
+  "costos_totales": 0.26293859749077564,
+  "sharpe": 0.18524677642164683,
+  "volatilidad_anual": 0.29634006654357214,
+  "rotacion_anual": 455.0424649417342,
+  "tiempo_invertido": 0.051945486865494765,
+  "exposicion_media": 0.046908947264467704,
+  "peor_anio": -0.007614757252713211,
+  "mejor_anio": 0.013498031331917737,
+  "barras": 5063,
+  "patrimonio_final": 1.005780489847224
+}

@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f4_pequena_s1",
+  "mercado": "brent",
+  "recompensa": "log_neto",
+  "semilla": 1,
+  "pasos": 150000,
+  "bootstrap": true,
+  "mejor_val_retorno": 0.2449127262535269,
+  "minutos": 3.0696375091870625,
+  "carpeta": "/home/claude/inv/results/corridas/f4_pequena_s1"
+}

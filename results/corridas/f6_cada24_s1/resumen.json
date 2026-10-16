@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f6_cada24_s1",
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "semilla": 1,
+  "pasos": 120000,
+  "bootstrap": true,
+  "mejor_val_retorno": 2.05308014212614,
+  "minutos": 5.797245983282725,
+  "carpeta": "/home/claude/inv/results/corridas/f6_cada24_s1"
+}

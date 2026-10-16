@@ -1,0 +1,93 @@
+{
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "pasos": 120000,
+  "semilla": 1,
+  "bootstrap": true,
+  "largo_bloque": 72,
+  "largo_episodio": 720,
+  "deriva_aleatoria": 0.25,
+  "agente": {
+    "oculta": 16,
+    "capas": 1,
+    "gamma": 0.99,
+    "lr": 0.0005,
+    "decaimiento_pesos": 0.01,
+    "lote": 64,
+    "capacidad": 200000,
+    "calentamiento": 5000,
+    "actualizar_cada": 1,
+    "objetivo_cada": 1000,
+    "epsilon_inicial": 1.0,
+    "epsilon_final": 0.05,
+    "epsilon_pasos": 60000,
+    "doble_dqn": true,
+    "recorte_gradiente": 10.0,
+    "semilla": 1
+  },
+  "entorno": {
+    "costo": 0.001,
+    "recompensa": "sharpe_dif",
+    "lambda_drawdown": 10.0,
+    "eta_sharpe": 0.02,
+    "frecuencia_decision": 1,
+    "largo_episodio": 720,
+    "aleatorizar_inicio": true,
+    "exposicion_inicial": 0.0,
+    "escala_recompensa": 100.0,
+    "semilla": 1
+  },
+  "particion": {
+    "entrenamiento": [
+      "2018-05-15",
+      "2020-10-31"
+    ],
+    "validacion": [
+      "2020-11-01",
+      "2021-05-31"
+    ],
+    "prueba": [
+      "2021-06-01",
+      "2022-12-31"
+    ]
+  },
+  "escalador": {
+    "nombres": [
+      "ret_1",
+      "ret_corto",
+      "ret_medio",
+      "vol_corta",
+      "razon_vol",
+      "dist_sma_corta",
+      "dist_sma_larga",
+      "rsi",
+      "drawdown",
+      "pos_rango"
+    ],
+    "medias": [
+      3.5671796632916444e-05,
+      0.0008522687978652129,
+      0.005040721616773172,
+      0.005999502043571445,
+      -0.2998308721508216,
+      0.0004123398049440872,
+      0.002686297990196063,
+      0.007879439254507428,
+      -0.13295418351822327,
+      0.016179968878492768
+    ],
+    "desviaciones": [
+      0.007742746146696525,
+      0.03705613001838211,
+      0.09945689423273965,
+      0.004909424220866146,
+      0.533684071229076,
+      0.020428182110608564,
+      0.05607319045687082,
+      0.12571137012887193,
+      0.1278976224587648,
+      0.2968942224519068
+    ],
+    "ventanas": "horario"
+  }
+}

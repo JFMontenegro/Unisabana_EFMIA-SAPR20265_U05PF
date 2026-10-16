@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f1_log_neto_s0",
+  "mercado": "btc",
+  "recompensa": "log_neto",
+  "semilla": 0,
+  "pasos": 120000,
+  "bootstrap": false,
+  "mejor_val_retorno": 0.2635500880650785,
+  "minutos": 6.965786012013753,
+  "carpeta": "/home/claude/inv/results/corridas/f1_log_neto_s0"
+}

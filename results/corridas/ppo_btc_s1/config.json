@@ -1,0 +1,51 @@
+{
+  "algoritmo": "PPO (Stable-Baselines3)",
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "pasos": 120000,
+  "semilla": 1,
+  "bootstrap": true,
+  "largo_bloque": 72,
+  "deriva_aleatoria": 0.25,
+  "agente": {
+    "n_steps": 720,
+    "lote": 180,
+    "n_epocas": 10,
+    "gamma": 0.99,
+    "gae_lambda": 0.95,
+    "clip_range": 0.2,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "oculta": 32,
+    "capas": 1,
+    "recorte_gradiente": 0.5,
+    "semilla": 1
+  },
+  "entorno": {
+    "costo": 0.001,
+    "recompensa": "sharpe_dif",
+    "lambda_drawdown": 10.0,
+    "eta_sharpe": 0.02,
+    "frecuencia_decision": 1,
+    "largo_episodio": 720,
+    "aleatorizar_inicio": true,
+    "exposicion_inicial": 0.0,
+    "escala_recompensa": 100.0,
+    "semilla": 1
+  },
+  "particion": {
+    "entrenamiento": [
+      "2018-05-15",
+      "2020-10-31"
+    ],
+    "validacion": [
+      "2020-11-01",
+      "2021-05-31"
+    ],
+    "prueba": [
+      "2021-06-01",
+      "2022-12-31"
+    ]
+  }
+}

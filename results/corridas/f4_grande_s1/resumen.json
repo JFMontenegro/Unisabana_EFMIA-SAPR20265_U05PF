@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f4_grande_s1",
+  "mercado": "btc",
+  "recompensa": "sharpe_dif",
+  "semilla": 1,
+  "pasos": 120000,
+  "bootstrap": true,
+  "mejor_val_retorno": 0.9875126660873172,
+  "minutos": 6.610438660780589,
+  "carpeta": "/home/claude/inv/results/corridas/f4_grande_s1"
+}

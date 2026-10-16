@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f3_sharpe_dif_s0",
+  "mercado": "brent",
+  "recompensa": "sharpe_dif",
+  "semilla": 0,
+  "pasos": 150000,
+  "bootstrap": true,
+  "mejor_val_retorno": 0.05556590487642055,
+  "minutos": 4.681695059935252,
+  "carpeta": "/home/claude/inv/results/corridas/f3_sharpe_dif_s0"
+}

@@ -1,0 +1,13 @@
+{
+  "etiqueta": "tab_btc_s1",
+  "algoritmo": "Tabular",
+  "mercado": "btc",
+  "semilla": 1,
+  "pasos": 120000,
+  "mejor_val_retorno": 0.04286492059980729,
+  "celdas": 192.0,
+  "visitadas": 192.0,
+  "cobertura": 1.0,
+  "visitas_medianas": 174.0,
+  "minutos": 0.5792470812797547
+}

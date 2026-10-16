@@ -1,0 +1,11 @@
+{
+  "etiqueta": "f7_final_s2",
+  "mercado": "brent",
+  "recompensa": "log_neto",
+  "semilla": 2,
+  "pasos": 150000,
+  "bootstrap": true,
+  "mejor_val_retorno": 0.21469733842899585,
+  "minutos": 3.368483622868856,
+  "carpeta": "/home/claude/inv/results/corridas/f7_final_s2"
+}
