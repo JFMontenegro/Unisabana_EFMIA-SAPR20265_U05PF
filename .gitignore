@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Datos crudos: los baja `python src/data.py`, no se versionan.
+# El script es la fuente reproducible; el CSV cambiaría con cada actualización
+# del repositorio de origen y ensuciaría los diffs.
+data/*.csv
+
+# Pesos de las redes. Se versionan solo los cinco miembros del comité
+# (results/comite/), que son los que respaldan los números del README.
+results/corridas/**/*.pt
+
+# Salidas voluminosas de las corridas intermedias
+results/*.log
