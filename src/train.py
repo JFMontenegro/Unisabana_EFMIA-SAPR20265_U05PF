@@ -53,7 +53,7 @@ def directorio_resultados(mercado: str) -> Path:
     return RAIZ / ("results" if mercado == "btc" else f"results_{mercado}")
 
 
-# Ruta de BTC conservada para los reportes y experimentos que la importan.
+# Ruta histórica de BTC, conservada para consumidores externos.
 CORRIDAS = RAIZ / "results" / "corridas"
 
 # Un hilo por proceso: la red es diminuta (11→128→128→3) y el paralelismo

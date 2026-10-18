@@ -1,6 +1,6 @@
 """Los experimentos del proyecto, en el orden en que se corrieron.
 
-Cuatro fases, cada una con su pregunta:
+Cada fase tiene su pregunta:
 
 - `fase1_recompensas` — ¿cuál de las tres funciones de recompensa produce un
   agente que generaliza, entrenando sobre la serie real? Las tres con las
@@ -19,6 +19,8 @@ Cuatro fases, cada una con su pregunta:
   Cuatro tamaños con su decaimiento de pesos.
 - `fase5_final` — la configuración ganadora con cinco semillas, para que el
   modelo que va a prueba no sea el afortunado de una corrida.
+- `fase6_frecuencia` — compara cada cuántas barras decidir en el mercado elegido.
+- `fase7_final` — la configuración y frecuencia elegidas con cinco semillas.
 
 Todo se decide con el tramo de validación. El de prueba no aparece en este
 archivo.
@@ -28,17 +30,15 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
 import pandas as pd
 from joblib import Parallel, delayed
 
+import data
 from agent import Config
 from environment import ConfigEntorno
-from train import CORRIDAS, entrenar
+from train import directorio_resultados, entrenar
 
-RAIZ = Path(__file__).resolve().parents[1]
-RESULTADOS = RAIZ / "results"
 PROCESOS = 2  # dos núcleos disponibles
 
 
@@ -46,6 +46,7 @@ def _correr(trabajo: dict) -> dict:
     cfg_ag = Config(**trabajo.get("agente", {}))
     cfg_env = ConfigEntorno(recompensa=trabajo["recompensa"], **trabajo.get("entorno", {}))
     return entrenar(
+        mercado=trabajo.get("mercado", "btc"),
         recompensa=trabajo["recompensa"],
         pasos=trabajo["pasos"],
         eval_cada=trabajo.get("eval_cada", 10_000),
@@ -60,17 +61,20 @@ def _correr(trabajo: dict) -> dict:
     )
 
 
-def _ejecutar(trabajos: list[dict], nombre: str) -> pd.DataFrame:
+def _ejecutar(trabajos: list[dict], nombre: str, mercado: str = "btc") -> pd.DataFrame:
+    resultados = directorio_resultados(mercado)
     hechos = Parallel(n_jobs=PROCESOS, backend="loky")(
-        delayed(_correr)(t) for t in trabajos
+        delayed(_correr)({**t, "mercado": mercado}) for t in trabajos
     )
     df = pd.DataFrame(hechos)
-    RESULTADOS.mkdir(parents=True, exist_ok=True)
-    df.to_csv(RESULTADOS / f"{nombre}.csv", index=False)
+    resultados.mkdir(parents=True, exist_ok=True)
+    df.to_csv(resultados / f"{nombre}.csv", index=False)
     return df
 
 
-def fase1_recompensas(pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1)) -> pd.DataFrame:
+def fase1_recompensas(
+    pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1), mercado: str = "btc"
+) -> pd.DataFrame:
     trabajos = [
         {
             "recompensa": r,
@@ -81,10 +85,12 @@ def fase1_recompensas(pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1)) 
         for r in ("log_neto", "drawdown", "sharpe_dif")
         for s in semillas
     ]
-    return _ejecutar(trabajos, "fase1_recompensas")
+    return _ejecutar(trabajos, "fase1_recompensas", mercado)
 
 
-def fase2_bootstrap(pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1)) -> pd.DataFrame:
+def fase2_bootstrap(
+    pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1), mercado: str = "btc"
+) -> pd.DataFrame:
     trabajos = [
         {
             "recompensa": r,
@@ -96,13 +102,15 @@ def fase2_bootstrap(pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1)) ->
         for r in ("log_neto", "drawdown", "sharpe_dif")
         for s in semillas
     ]
-    return _ejecutar(trabajos, "fase2_bootstrap")
+    return _ejecutar(trabajos, "fase2_bootstrap", mercado)
 
 
 DERIVA = 0.25  # desviación de la deriva anualizada sorteada por episodio
 
 
-def fase3_deriva(pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1)) -> pd.DataFrame:
+def fase3_deriva(
+    pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1), mercado: str = "btc"
+) -> pd.DataFrame:
     """Remuestreo + deriva aleatoria por episodio.
 
     La fase 2 quitó la memorización pero dejó al agente con una exposición alta
@@ -123,11 +131,11 @@ def fase3_deriva(pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1)) -> pd
         for r in ("log_neto", "drawdown", "sharpe_dif")
         for s in semillas
     ]
-    return _ejecutar(trabajos, "fase3_deriva")
+    return _ejecutar(trabajos, "fase3_deriva", mercado)
 
 
 def fase4_capacidad(
-    recompensa: str, pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1)
+    recompensa: str, pasos: int = 150_000, semillas: tuple[int, ...] = (0, 1), mercado: str = "btc"
 ) -> pd.DataFrame:
     variantes = {
         "grande": {"oculta": 128, "capas": 2, "decaimiento_pesos": 1e-4},
@@ -148,7 +156,7 @@ def fase4_capacidad(
         for nombre, v in variantes.items()
         for s in semillas
     ]
-    return _ejecutar(trabajos, "fase4_capacidad")
+    return _ejecutar(trabajos, "fase4_capacidad", mercado)
 
 
 def fase6_frecuencia(
@@ -168,8 +176,6 @@ def fase6_frecuencia(
     21 barras no es una optimización de cómputo, es una decisión de diseño sobre
     la razón señal/costo del problema.
     """
-    import data
-
     frecuencias = frecuencias or data.FRECUENCIAS[mercado]
     trabajos = [
         {
@@ -185,7 +191,7 @@ def fase6_frecuencia(
         for f in frecuencias
         for s in semillas
     ]
-    return _ejecutar(trabajos, "fase6_frecuencia")
+    return _ejecutar(trabajos, "fase6_frecuencia", mercado)
 
 
 def fase7_final(
@@ -194,6 +200,7 @@ def fase7_final(
     frecuencia: int,
     pasos: int = 150_000,
     semillas: tuple[int, ...] = (0, 1, 2, 3, 4),
+    mercado: str = "btc",
 ) -> pd.DataFrame:
     trabajos = [
         {
@@ -208,7 +215,7 @@ def fase7_final(
         }
         for s in semillas
     ]
-    return _ejecutar(trabajos, "fase7_final")
+    return _ejecutar(trabajos, "fase7_final", mercado)
 
 
 def fase5_final(
@@ -216,6 +223,7 @@ def fase5_final(
     agente: dict,
     pasos: int = 150_000,
     semillas: tuple[int, ...] = (0, 1, 2, 3, 4),
+    mercado: str = "btc",
 ) -> pd.DataFrame:
     trabajos = [
         {
@@ -229,14 +237,14 @@ def fase5_final(
         }
         for s in semillas
     ]
-    return _ejecutar(trabajos, "fase5_final")
+    return _ejecutar(trabajos, "fase5_final", mercado)
 
 
-def tabla_validacion(patron: str) -> pd.DataFrame:
+def tabla_validacion(patron: str, mercado: str = "btc") -> pd.DataFrame:
     """Lee las bitácoras de las corridas que casan con `patron` y resume el
     mejor punto de validación de cada una."""
     filas = []
-    for carpeta in sorted(CORRIDAS.glob(patron)):
+    for carpeta in sorted((directorio_resultados(mercado) / "corridas").glob(patron)):
         mejor = carpeta / "mejor.json"
         if not mejor.exists():
             continue
@@ -267,6 +275,7 @@ def tabla_validacion(patron: str) -> pd.DataFrame:
 def main() -> None:
     p = argparse.ArgumentParser(description="Corre una fase de experimentos")
     p.add_argument("fase", choices=["1", "2", "3", "4", "5"])
+    p.add_argument("--mercado", default="btc", choices=list(data.FUENTES))
     p.add_argument("--pasos", type=int, default=150_000)
     p.add_argument("--recompensa", default="log_neto")
     p.add_argument("--oculta", type=int, default=128)
@@ -275,18 +284,19 @@ def main() -> None:
     a = p.parse_args()
 
     if a.fase == "1":
-        df = fase1_recompensas(pasos=a.pasos)
+        df = fase1_recompensas(pasos=a.pasos, mercado=a.mercado)
     elif a.fase == "2":
-        df = fase2_bootstrap(pasos=a.pasos)
+        df = fase2_bootstrap(pasos=a.pasos, mercado=a.mercado)
     elif a.fase == "3":
-        df = fase3_deriva(pasos=a.pasos)
+        df = fase3_deriva(pasos=a.pasos, mercado=a.mercado)
     elif a.fase == "4":
-        df = fase4_capacidad(a.recompensa, pasos=a.pasos)
+        df = fase4_capacidad(a.recompensa, pasos=a.pasos, mercado=a.mercado)
     else:
         df = fase5_final(
             a.recompensa,
             {"oculta": a.oculta, "capas": a.capas, "decaimiento_pesos": a.decaimiento},
             pasos=a.pasos,
+            mercado=a.mercado,
         )
     print(df.to_string(index=False))
 

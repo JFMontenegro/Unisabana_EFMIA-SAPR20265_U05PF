@@ -8,7 +8,7 @@ Para llenarla, desde la raíz del proyecto y después de la instalación con `uv
 descrita en el README principal:
 
 ```bash
-uv run --locked --extra dev --extra ppo python src/data.py
+uv run --locked python src/data.py
 ```
 
 Eso baja y valida las tres series, y escribe aquí:

@@ -1,7 +1,7 @@
 """Ensambla las tablas y figuras del informe a partir de las corridas guardadas.
 
 Separado de `plots.py` (que solo dibuja) y de `experiments.py` (que solo
-entrena): este módulo lee `results/corridas/*` y produce exactamente los
+entrena): este módulo lee las corridas del mercado elegido y produce los
 artefactos que cita el README, para que ninguna cifra del informe se escriba a
 mano.
 """
@@ -14,27 +14,25 @@ from pathlib import Path
 
 import pandas as pd
 
+import data
 import plots
-from train import CORRIDAS
-
-RAIZ = Path(__file__).resolve().parents[1]
-RESULTADOS = RAIZ / "results"
+from train import directorio_resultados
 
 
-def curvas(patron: str) -> dict[str, pd.DataFrame]:
+def curvas(patron: str, mercado: str = "btc") -> dict[str, pd.DataFrame]:
     """Carga las bitácoras de entrenamiento de las corridas que casan."""
     salida = {}
-    for carpeta in sorted(CORRIDAS.glob(patron)):
+    for carpeta in sorted((directorio_resultados(mercado) / "corridas").glob(patron)):
         archivo = carpeta / "entrenamiento.csv"
         if archivo.exists():
             salida[carpeta.name] = pd.read_csv(archivo)
     return salida
 
 
-def resumen_de_fase(patron: str) -> pd.DataFrame:
+def resumen_de_fase(patron: str, mercado: str = "btc") -> pd.DataFrame:
     """Una fila por corrida: el mejor punto de validación y el estado final."""
     filas = []
-    for carpeta in sorted(CORRIDAS.glob(patron)):
+    for carpeta in sorted((directorio_resultados(mercado) / "corridas").glob(patron)):
         if not (carpeta / "mejor.json").exists():
             continue
         mejor = json.loads((carpeta / "mejor.json").read_text(encoding="utf-8"))
@@ -79,15 +77,15 @@ def tabla_por_recompensa(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def figura_memorizacion() -> Path | None:
+def figura_memorizacion(mercado: str = "btc") -> Path | None:
     """Compara la fase 1 (serie real) con la fase 2 (remuestreo por bloques).
 
     Es la figura central del informe: muestra que el retorno de entrenamiento
     cae de 10¹² % a ~10² % y que eso es lo que hace que la validación signifique
     algo.
     """
-    sin = curvas("f1_log_neto_s0")
-    con = curvas("f2_log_neto_s0")
+    sin = curvas("f1_log_neto_s0", mercado)
+    con = curvas("f2_log_neto_s0", mercado)
     if not sin or not con:
         return None
     return plots.brecha_entrenamiento_validacion(
@@ -96,18 +94,23 @@ def figura_memorizacion() -> Path | None:
             "Remuestreo por bloques (fase 2)": next(iter(con.values())),
         },
         titulo="Memorización: patrimonio final en entrenamiento (línea continua) y validación (línea discontinua)",
+        nombre="brecha_memorizacion.png"
+        if mercado == "btc"
+        else f"brecha_memorizacion_{mercado}.png",
     )
 
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Ensambla tablas y figuras del informe")
+    p.add_argument("--mercado", default="btc", choices=list(data.FUENTES))
     p.add_argument("--fases", nargs="*", default=["f1_*", "f2_*", "f3_*", "f4_*"])
     a = p.parse_args()
 
-    RESULTADOS.mkdir(parents=True, exist_ok=True)
+    resultados = directorio_resultados(a.mercado)
+    resultados.mkdir(parents=True, exist_ok=True)
     todo = []
     for patron in a.fases:
-        df = resumen_de_fase(patron)
+        df = resumen_de_fase(patron, mercado=a.mercado)
         if df.empty:
             continue
         fase = patron.split("_")[0]
@@ -121,15 +124,17 @@ def main() -> None:
             plots.comparacion_de_recompensas(
                 df,
                 titulo=f"Retorno en validación por función de recompensa ({fase})",
-                nombre=f"recompensas_{fase}.png",
+                nombre=f"recompensas_{fase}.png"
+                if a.mercado == "btc"
+                else f"recompensas_{a.mercado}_{fase}.png",
             )
 
     if todo:
         completo = pd.concat(todo, ignore_index=True)
-        completo.to_csv(RESULTADOS / "resumen_experimentos.csv", index=False)
-        print(f"\n-> {RESULTADOS / 'resumen_experimentos.csv'}")
+        completo.to_csv(resultados / "resumen_experimentos.csv", index=False)
+        print(f"\n-> {resultados / 'resumen_experimentos.csv'}")
 
-    ruta = figura_memorizacion()
+    ruta = figura_memorizacion(a.mercado)
     if ruta:
         print(f"-> {ruta}")
 

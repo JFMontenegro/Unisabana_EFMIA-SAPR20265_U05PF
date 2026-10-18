@@ -1,10 +1,10 @@
-"""Encadena las fases 3 → 4 → 5 tomando cada decisión con el tramo de validación.
+"""Encadena las fases 3 a 7 tomando cada decisión con el tramo de validación.
 
 Cada fase elige su ganador por el **retorno medio en validación entre semillas**,
 no por el máximo: el máximo entre semillas premia la suerte de inicialización y
 es la forma más común de inventarse una mejora que no existe.
 
-Al terminar deja en `results/decisiones.json` la cadena completa de decisiones,
+Al terminar deja en la carpeta del mercado la cadena completa de decisiones,
 con los números que las justificaron, para que cualquiera pueda auditar que la
 configuración final se eligió sin mirar el tramo de prueba.
 """
@@ -12,14 +12,13 @@ configuración final se eligió sin mirar el tramo de prueba.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pandas as pd
 
+import data
 import experiments
 import report
-
-RESULTADOS = Path(__file__).resolve().parents[1] / "results"
+from train import directorio_resultados
 
 CAPACIDADES = {
     "grande": {"oculta": 128, "capas": 2, "decaimiento_pesos": 1e-4},
@@ -38,12 +37,13 @@ def _ganador(df: pd.DataFrame, por: str) -> tuple[str, pd.DataFrame]:
     return str(agregado.index[0]), agregado
 
 
-def correr(pasos: int = 150_000) -> dict:
-    decisiones: dict = {"pasos_por_corrida": pasos}
+def correr(pasos: int = 150_000, mercado: str = "btc") -> dict:
+    resultados = directorio_resultados(mercado)
+    decisiones: dict = {"pasos_por_corrida": pasos, "mercado": mercado}
 
     print("\n########## FASE 3 — remuestreo + deriva aleatoria por episodio\n", flush=True)
-    experiments.fase3_deriva(pasos=pasos)
-    f3 = report.resumen_de_fase("f3_*")
+    experiments.fase3_deriva(pasos=pasos, mercado=mercado)
+    f3 = report.resumen_de_fase("f3_*", mercado=mercado)
     recompensa, tabla_r = _ganador(f3, "recompensa")
     print("\nRetorno medio en validación por recompensa:")
     print(tabla_r.to_string())
@@ -55,8 +55,8 @@ def correr(pasos: int = 150_000) -> dict:
     }
 
     print("\n########## FASE 4 — capacidad de la red\n", flush=True)
-    experiments.fase4_capacidad(recompensa, pasos=pasos)
-    f4 = report.resumen_de_fase("f4_*")
+    experiments.fase4_capacidad(recompensa, pasos=pasos, mercado=mercado)
+    f4 = report.resumen_de_fase("f4_*", mercado=mercado)
     f4 = f4.assign(variante=f4["corrida"].str.split("_").str[1])
     variante, tabla_c = _ganador(f4, "variante")
     print("\nRetorno medio en validación por capacidad:")
@@ -70,8 +70,8 @@ def correr(pasos: int = 150_000) -> dict:
     }
 
     print("\n########## FASE 5 — cinco semillas, decidiendo en cada barra\n", flush=True)
-    experiments.fase5_final(recompensa, CAPACIDADES[variante], pasos=pasos)
-    f5 = report.resumen_de_fase("f5_*")
+    experiments.fase5_final(recompensa, CAPACIDADES[variante], pasos=pasos, mercado=mercado)
+    f5 = report.resumen_de_fase("f5_*", mercado=mercado)
     print(f5.to_string(index=False))
     decisiones["fase5"] = {
         "recompensa": recompensa,
@@ -84,8 +84,8 @@ def correr(pasos: int = 150_000) -> dict:
     }
 
     print("\n########## FASE 6 — cada cuánto decidir\n", flush=True)
-    experiments.fase6_frecuencia(recompensa, CAPACIDADES[variante], pasos=pasos)
-    f6 = report.resumen_de_fase("f6_*")
+    experiments.fase6_frecuencia(recompensa, CAPACIDADES[variante], pasos=pasos, mercado=mercado)
+    f6 = report.resumen_de_fase("f6_*", mercado=mercado)
     f6 = f6.assign(frecuencia=f6["corrida"].str.extract(r"cada(\d+)")[0].astype(int))
     frecuencia, tabla_f = _ganador(f6, "frecuencia")
     frecuencia = int(frecuencia)
@@ -99,8 +99,10 @@ def correr(pasos: int = 150_000) -> dict:
     }
 
     print("\n########## FASE 7 — configuración final, cinco semillas\n", flush=True)
-    experiments.fase7_final(recompensa, CAPACIDADES[variante], frecuencia, pasos=pasos)
-    f7 = report.resumen_de_fase("f7_*")
+    experiments.fase7_final(
+        recompensa, CAPACIDADES[variante], frecuencia, pasos=pasos, mercado=mercado
+    )
+    f7 = report.resumen_de_fase("f7_*", mercado=mercado)
     print(f7.to_string(index=False))
     decisiones["fase7"] = {
         "recompensa": recompensa,
@@ -112,18 +114,22 @@ def correr(pasos: int = 150_000) -> dict:
         "val_rotacion_media": float(f7["val_rotacion"].mean()),
     }
 
-    RESULTADOS.mkdir(parents=True, exist_ok=True)
-    (RESULTADOS / "decisiones.json").write_text(
+    resultados.mkdir(parents=True, exist_ok=True)
+    (resultados / "decisiones.json").write_text(
         json.dumps(decisiones, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    print(f"\n→ {RESULTADOS / 'decisiones.json'}")
-    print("\nEl tramo de prueba sigue sin leerse. Lo lee `python src/evaluate.py`.")
+    print(f"\n→ {resultados / 'decisiones.json'}")
+    print(
+        f"\nEl tramo de prueba sigue sin leerse. Lo lee `python src/evaluate.py --mercado {mercado}`."
+    )
     return decisiones
 
 
 if __name__ == "__main__":
     import argparse
 
-    p = argparse.ArgumentParser(description="Corre las fases 3 a 5 encadenadas")
+    p = argparse.ArgumentParser(description="Corre las fases 3 a 7 encadenadas")
     p.add_argument("--pasos", type=int, default=150_000)
-    correr(pasos=p.parse_args().pasos)
+    p.add_argument("--mercado", default="btc", choices=list(data.FUENTES))
+    a = p.parse_args()
+    correr(pasos=a.pasos, mercado=a.mercado)

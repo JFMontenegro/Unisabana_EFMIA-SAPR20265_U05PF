@@ -492,40 +492,40 @@ comandos siguientes usan Python 3.12, con el que se verificaron las pruebas.
 Desde la raíz del repositorio:
 
 ```bash
-uv sync --locked --python 3.12 --extra dev --extra ppo
-uv run --locked --extra dev --extra ppo pytest -ra
-```
-
-`uv sync` crea o actualiza `.venv`. `--locked` exige que `uv.lock` coincida con
-`pyproject.toml` y conserva las versiones resueltas. El extra `dev` incluye las
-herramientas de pruebas y notebooks; `ppo` añade `stable-baselines3`, necesario
-para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 83 pruebas
-pasan sin omisiones**.
-
-Para trabajar con DQN y Q-Learning tabular sin instalar PPO:
-
-```bash
 uv sync --locked --python 3.12 --extra dev
 uv run --locked --extra dev pytest -ra
 ```
 
-En un entorno sin `stable-baselines3`, se ejecutan **76 pruebas** y se omiten
-**7 que requieren esa dependencia**. Las pruebas tabulares se ejecutan en ambos
-casos. Los ejemplos siguientes incluyen ambos extras para asegurar que las
-dependencias de desarrollo y de PPO estén disponibles al ejecutar cada comando.
+`uv sync` crea o actualiza `.venv`. `--locked` exige que `uv.lock` coincida con
+`pyproject.toml` y conserva las versiones resueltas. El extra `dev` incluye las
+herramientas de pruebas y notebooks. DQN, el agente tabular, los experimentos,
+el pipeline y los reportes funcionan sin instalar PPO. En un entorno sin
+`stable-baselines3`, **94 pruebas pasan y se omiten 7** que requieren esa
+dependencia; las pruebas tabulares se ejecutan siempre.
+
+Para entrenar PPO o ejecutar todas las pruebas, se añade su extra opcional:
+
+```bash
+uv sync --locked --python 3.12 --extra dev --extra ppo
+uv run --locked --extra dev --extra ppo pytest -ra
+```
+
+Con ambos extras, **las 101 pruebas pasan sin omisiones**. `--extra ppo` instala
+`stable-baselines3`; no selecciona ni ejecuta ese algoritmo. PPO se entrena
+explícitamente con `src/train_alt.py ppo`.
 
 ### Datos, análisis y entrenamiento
 
 ```bash
-uv run --locked --extra dev --extra ppo python src/data.py  # baja y valida las tres series
-uv run --locked --extra dev --extra ppo jupyter execute notebooks/eda.ipynb
+uv run --locked python src/data.py  # baja y valida las tres series
+uv run --locked --extra dev jupyter execute notebooks/eda.ipynb
 
-uv run --locked --extra dev --extra ppo python src/experiments.py 1 --pasos 120000  # serie real
-uv run --locked --extra dev --extra ppo python src/experiments.py 2 --pasos 120000  # remuestreo por bloques
-uv run --locked --extra dev --extra ppo python src/pipeline.py --pasos 120000  # fases 3 a 7
-uv run --locked --extra dev --extra ppo python src/train_alt.py ppo --semilla 0
-uv run --locked --extra dev --extra ppo python src/train_alt.py tabular --semilla 0
-uv run --locked --extra dev --extra ppo python src/report.py
+uv run --locked python src/experiments.py 1 --pasos 120000  # serie real
+uv run --locked python src/experiments.py 2 --pasos 120000  # remuestreo por bloques
+uv run --locked python src/pipeline.py --pasos 120000  # fases 3 a 7
+uv run --locked --extra ppo python src/train_alt.py ppo --semilla 0
+uv run --locked python src/train_alt.py tabular --semilla 0
+uv run --locked python src/report.py
 ```
 
 Los YAML de `configs/` documentan las configuraciones de referencia y final;
@@ -541,15 +541,31 @@ cinco miembros de cada comité se repiten con `--semilla` de 0 a 4.
 Para entrenar y evaluar una nueva corrida DQN de Brent sin mover archivos:
 
 ```bash
-uv run --locked --extra dev --extra ppo python src/train.py --mercado brent --pasos 120000 --etiqueta nueva_s0
-uv run --locked --extra dev --extra ppo python src/evaluate.py --mercado brent --patron nueva_s0 --etiqueta nueva_s0
+uv run --locked python src/train.py --mercado brent --pasos 120000 --etiqueta nueva_s0
+uv run --locked python src/evaluate.py --mercado brent --patron nueva_s0 --etiqueta nueva_s0
 ```
 
 Este ejemplo usa los parámetros por defecto del entrenador. `--patron` selecciona
 la corrida nueva y `--etiqueta` en el evaluador guarda sus resultados con un
-nombre propio, conservando la evaluación publicada. Los comandos de
-`experiments.py`, `pipeline.py` y `report.py` mostrados arriba siguen
-correspondiendo al flujo de BTC.
+nombre propio, conservando la evaluación publicada.
+
+`experiments.py`, `pipeline.py` y `report.py` también aceptan `--mercado`
+(por defecto, `btc`). Para ejecutar la búsqueda y generar reportes de Brent:
+
+```bash
+uv run --locked python src/experiments.py 1 --mercado brent --pasos 150000
+uv run --locked python src/experiments.py 2 --mercado brent --pasos 150000
+uv run --locked python src/pipeline.py --mercado brent --pasos 150000
+uv run --locked python src/report.py --mercado brent
+```
+
+Cada fase entrena el mercado solicitado y guarda su resumen en la carpeta de
+ese mercado. El pipeline lee sus corridas para seleccionar la recompensa,
+la capacidad y la frecuencia, y guarda `decisiones.json` en la misma carpeta.
+Los reportes generan allí `resumen_experimentos.csv`; las figuras de Brent
+usan nombres como `recompensas_brent_f3.png` y `brecha_memorizacion_brent.png`.
+Estos comandos ejecutan nuevas corridas; para evaluar directamente los modelos
+incluidos se usan los comandos de la sección siguiente.
 
 `Escalador.de_dict()` acepta los nombres antiguos de los indicadores diarios
 guardados de Brent (por ejemplo, `ret_5` y `vol_21`) y los traduce a los nombres
@@ -559,9 +575,9 @@ guardados permanecen intactos. Esos nombres antiguos requieren ventanas diarias.
 ### Evaluación final por mercado
 
 ```bash
-uv run --locked --extra dev --extra ppo python src/baselines.py --tramo prueba
-uv run --locked --extra dev --extra ppo python src/evaluate.py
-uv run --locked --extra dev --extra ppo python src/evaluate.py --mercado brent
+uv run --locked python src/baselines.py --tramo prueba
+uv run --locked python src/evaluate.py
+uv run --locked python src/evaluate.py --mercado brent
 ```
 
 La evaluación lee el tramo de prueba: la configuración y los modelos deben
@@ -632,7 +648,7 @@ agente-inversor/
 ├── configs/
 │   ├── base.yaml              # configuración de referencia
 │   └── final.yaml             # la del agente reportado en §7, con su justificación
-├── tests/                     # 83 pruebas en 10 archivos; 7 requieren el extra ppo
+├── tests/                     # 101 pruebas en 11 archivos; 7 requieren el extra ppo
 │   ├── test_sin_fuga.py       # ← el que sostiene la honestidad del experimento (los dos mercados)
 │   ├── test_entorno.py        # contabilidad: costos, patrimonio, recompensas, frecuencia
 │   ├── test_entrenamiento_rutas.py # entrenamiento breve por mercado y evaluación sin mover archivos
@@ -642,6 +658,7 @@ agente-inversor/
 │   ├── test_evaluacion_modelos.py # respaldos y evaluación de BTC y Brent por separado
 │   ├── test_evaluacion_rapida.py  # la tabla Q es la misma política + regresión del error de §8
 │   ├── test_escalador.py      # compatibilidad de formatos y conservación de estados
+│   ├── test_experimentos_mercados.py # fases, decisiones y reportes por mercado
 │   └── test_agentes_comparados.py # PPO y tabular comparten la interfaz del DQN
 ├── results/                   # BTC: corridas, comité, decisiones y evaluación
 ├── results_brent/             # la réplica del apéndice A
@@ -656,7 +673,7 @@ agente-inversor/
 1. **El código de entrenamiento no puede leer el tramo de prueba.** `train.montar()` no lo carga: hay que pedirlo con `incluir_prueba=True`, y el único módulo que lo hace es `evaluate.py`. Cualquier intento desde `train.py`, `experiments.py` o `pipeline.py` muere con `KeyError: 'prueba'`.
 2. `results/decisiones.json` registra cada decisión con la tabla de validación que la justificó.
 3. `results/corridas/*/config.json` guarda la configuración resuelta de cada corrida, con la partición incluida.
-4. `uv run --locked --extra dev --extra ppo pytest tests/test_sin_fuga.py` verifica, en los dos mercados, la causalidad de los indicadores, el congelamiento del escalador y que ninguna barra operable aparezca en dos tramos.
+4. `uv run --locked --extra dev pytest tests/test_sin_fuga.py` verifica, en los dos mercados, la causalidad de los indicadores, el congelamiento del escalador y que ninguna barra operable aparezca en dos tramos.
 
 ---
 
