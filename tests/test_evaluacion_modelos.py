@@ -12,6 +12,7 @@ import torch
 
 import evaluate
 import plots
+import train
 from agent import AgenteDQN
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -31,7 +32,7 @@ def montaje(tmp_path, monkeypatch):
     mejor = json.loads((original / "mejor.json").read_text(encoding="utf-8"))
     shutil.copy2(original / "config.json", carpeta / "config.json")
     shutil.copy2(original / "mejor.json", carpeta / "mejor.json")
-    monkeypatch.setattr(evaluate, "RAIZ", tmp_path)
+    monkeypatch.setattr(train, "RAIZ", tmp_path)
     return carpeta, cfg, mejor, comite
 
 
@@ -113,7 +114,7 @@ def test_la_evaluacion_completa_reproduce_las_metricas_publicadas(
         "equity_brent_prueba.png" if mercado == "btc" else "equity_prueba.png"
     )
     figura_ajena.write_bytes(b"figura del otro mercado")
-    monkeypatch.setattr(evaluate, "RAIZ", tmp_path)
+    monkeypatch.setattr(train, "RAIZ", tmp_path)
     monkeypatch.setattr(plots, "FIGURAS", figuras)
 
     evaluate.evaluar(mercado=mercado)
@@ -154,7 +155,7 @@ def test_rechaza_una_corrida_de_otro_mercado(montaje) -> None:
 def test_carga_el_comite_y_selecciona_el_individuo_desde_las_corridas_del_mercado(
     tmp_path, monkeypatch, mercado
 ) -> None:
-    monkeypatch.setattr(evaluate, "RAIZ", tmp_path)
+    monkeypatch.setattr(train, "RAIZ", tmp_path)
     for resultados in ("results", "results_brent"):
         original = RAIZ / resultados
         destino = tmp_path / resultados / "corridas" / "f7_final_s1"

@@ -33,16 +33,7 @@ import metrics
 import plots
 from agent import AgenteDQN
 from environment import ConfigEntorno
-from train import montar
-
-RAIZ = Path(__file__).resolve().parents[1]
-
-
-def directorio_resultados(mercado: str) -> Path:
-    """Carpeta de modelos y resultados correspondiente a un único mercado."""
-    if mercado not in data.FUENTES:
-        raise ValueError(f"mercado desconocido: {mercado}")
-    return RAIZ / ("results" if mercado == "btc" else f"results_{mercado}")
+from train import directorio_resultados, montar
 
 
 class Comite:

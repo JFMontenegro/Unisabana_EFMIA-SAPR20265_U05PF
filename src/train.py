@@ -44,6 +44,16 @@ from environment import (
 )
 
 RAIZ = Path(__file__).resolve().parents[1]
+
+
+def directorio_resultados(mercado: str) -> Path:
+    """Carpeta compartida por el entrenamiento y la evaluación de un mercado."""
+    if mercado not in data.FUENTES:
+        raise ValueError(f"mercado desconocido: {mercado}")
+    return RAIZ / ("results" if mercado == "btc" else f"results_{mercado}")
+
+
+# Ruta de BTC conservada para los reportes y experimentos que la importan.
 CORRIDAS = RAIZ / "results" / "corridas"
 
 # Un hilo por proceso: la red es diminuta (11→128→128→3) y el paralelismo
@@ -134,7 +144,7 @@ def entrenar(
     agente = AgenteDQN(env.observation_space.shape[0], env.action_space.n, cfg_ag)
 
     etiqueta = etiqueta or f"{mercado}_{recompensa}_s{semilla}"
-    carpeta = CORRIDAS / etiqueta
+    carpeta = directorio_resultados(mercado) / "corridas" / etiqueta
     carpeta.mkdir(parents=True, exist_ok=True)
     (carpeta / "config.json").write_text(
         json.dumps(
@@ -239,7 +249,9 @@ def entrenar(
 def main() -> None:
     p = argparse.ArgumentParser(description="Entrena el agente inversor con DQN")
     p.add_argument("--mercado", default="btc", choices=list(data.FUENTES))
-    p.add_argument("--recompensa", default="log_neto", choices=["log_neto", "drawdown", "sharpe_dif"])
+    p.add_argument(
+        "--recompensa", default="log_neto", choices=["log_neto", "drawdown", "sharpe_dif"]
+    )
     p.add_argument("--pasos", type=int, default=200_000)
     p.add_argument("--eval-cada", type=int, default=10_000)
     p.add_argument("--semilla", type=int, default=0)

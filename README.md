@@ -499,7 +499,7 @@ uv run --locked --extra dev --extra ppo pytest -ra
 `uv sync` crea o actualiza `.venv`. `--locked` exige que `uv.lock` coincida con
 `pyproject.toml` y conserva las versiones resueltas. El extra `dev` incluye las
 herramientas de pruebas y notebooks; `ppo` añade `stable-baselines3`, necesario
-para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 77 pruebas
+para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 83 pruebas
 pasan sin omisiones**.
 
 Para trabajar con DQN y Q-Learning tabular sin instalar PPO:
@@ -509,8 +509,8 @@ uv sync --locked --python 3.12 --extra dev
 uv run --locked --extra dev pytest -ra
 ```
 
-En un entorno sin `stable-baselines3`, se ejecutan **72 pruebas** y se omiten
-**5 que requieren esa dependencia**. Las pruebas tabulares se ejecutan en ambos
+En un entorno sin `stable-baselines3`, se ejecutan **76 pruebas** y se omiten
+**7 que requieren esa dependencia**. Las pruebas tabulares se ejecutan en ambos
 casos. Los ejemplos siguientes incluyen ambos extras para asegurar que las
 dependencias de desarrollo y de PPO estén disponibles al ejecutar cada comando.
 
@@ -530,10 +530,26 @@ uv run --locked --extra dev --extra ppo python src/report.py
 
 Los YAML de `configs/` documentan las configuraciones de referencia y final;
 los scripts no los cargan automáticamente. Los valores efectivos de cada
-corrida se guardan en `results/corridas/<etiqueta>/config.json`. El pipeline usa
+corrida se guardan en `config.json` dentro de su carpeta: `results/corridas/<etiqueta>/`
+para BTC y `results_brent/corridas/<etiqueta>/` para Brent. DQN (`train.py`),
+PPO y el tabular (`train_alt.py`) eligen esa carpeta con `--mercado`.
+El pipeline usa
 150 000 pasos por defecto; `--pasos 120000` selecciona el presupuesto reportado
 para BTC. Los ejemplos de `train_alt.py` entrenan una semilla; para obtener los
 cinco miembros de cada comité se repiten con `--semilla` de 0 a 4.
+
+Para entrenar y evaluar una nueva corrida DQN de Brent sin mover archivos:
+
+```bash
+uv run --locked --extra dev --extra ppo python src/train.py --mercado brent --pasos 120000 --etiqueta nueva_s0
+uv run --locked --extra dev --extra ppo python src/evaluate.py --mercado brent --patron nueva_s0 --etiqueta nueva_s0
+```
+
+Este ejemplo usa los parámetros por defecto del entrenador. `--patron` selecciona
+la corrida nueva y `--etiqueta` en el evaluador guarda sus resultados con un
+nombre propio, conservando la evaluación publicada. Los comandos de
+`experiments.py`, `pipeline.py` y `report.py` mostrados arriba siguen
+correspondiendo al flujo de BTC.
 
 `Escalador.de_dict()` acepta los nombres antiguos de los indicadores diarios
 guardados de Brent (por ejemplo, `ret_5` y `vol_21`) y los traduce a los nombres
@@ -572,9 +588,9 @@ dentro de la carpeta del mercado. Las figuras quedan en `figuras/`: BTC genera
 `equity_prueba.png` y `exposicion_prueba.png`; Brent genera
 `equity_brent_prueba.png` y `exposicion_brent_prueba.png`.
 
-Estas rutas corresponden al evaluador. Los scripts de entrenamiento guardan en
-`results/corridas/`; para evaluar nuevas corridas de Brent, sus artefactos deben
-estar en `results_brent/corridas/`.
+Los entrenadores y el evaluador comparten la misma selección de carpetas por
+mercado. Las corridas nuevas de Brent quedan directamente en
+`results_brent/corridas/`, disponibles para `evaluate.py --mercado brent`.
 
 ### El dataset, identificado
 
@@ -616,9 +632,10 @@ agente-inversor/
 ├── configs/
 │   ├── base.yaml              # configuración de referencia
 │   └── final.yaml             # la del agente reportado en §7, con su justificación
-├── tests/                     # 77 pruebas en 9 archivos; 5 requieren el extra ppo
+├── tests/                     # 83 pruebas en 10 archivos; 7 requieren el extra ppo
 │   ├── test_sin_fuga.py       # ← el que sostiene la honestidad del experimento (los dos mercados)
 │   ├── test_entorno.py        # contabilidad: costos, patrimonio, recompensas, frecuencia
+│   ├── test_entrenamiento_rutas.py # entrenamiento breve por mercado y evaluación sin mover archivos
 │   ├── test_baselines.py      # las líneas base son lo que dicen ser
 │   ├── test_agente.py         # DQN, replay, truncación
 │   ├── test_bootstrap.py      # el remuestreo preserva estadística y destruye orden

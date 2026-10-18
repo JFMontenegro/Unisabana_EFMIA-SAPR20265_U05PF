@@ -39,7 +39,7 @@ from environment import (
 )
 from ppo import AgentePPO, ConfigPPO
 from tabular import AgenteTabular, ConfigTabular
-from train import CORRIDAS, montar
+from train import directorio_resultados, montar
 
 torch.set_num_threads(1)
 
@@ -96,7 +96,7 @@ def entrenar_ppo(
     agente = AgentePPO.nuevo(env, cfg)
 
     etiqueta = etiqueta or f"ppo_{mercado}_s{semilla}"
-    carpeta = CORRIDAS / etiqueta
+    carpeta = directorio_resultados(mercado) / "corridas" / etiqueta
     carpeta.mkdir(parents=True, exist_ok=True)
     (carpeta / "config.json").write_text(
         json.dumps(
@@ -110,9 +110,7 @@ def entrenar_ppo(
                 "largo_bloque": LARGO_BLOQUE,
                 "deriva_aleatoria": DERIVA,
                 "agente": asdict_safe(cfg),
-                "entorno": {
-                    k: v for k, v in cfg_env.__dict__.items() if not k.startswith("_")
-                },
+                "entorno": {k: v for k, v in cfg_env.__dict__.items() if not k.startswith("_")},
                 "particion": data.PARTICION[mercado],
             },
             indent=2,
@@ -197,7 +195,7 @@ def entrenar_tabular(
     agente = AgenteTabular(bordes, n_acciones=env.action_space.n, cfg=cfg)
 
     etiqueta = etiqueta or f"tab_{mercado}_s{semilla}"
-    carpeta = CORRIDAS / etiqueta
+    carpeta = directorio_resultados(mercado) / "corridas" / etiqueta
     carpeta.mkdir(parents=True, exist_ok=True)
     (carpeta / "config.json").write_text(
         json.dumps(
@@ -210,13 +208,9 @@ def entrenar_tabular(
                 "bootstrap": True,
                 "largo_bloque": LARGO_BLOQUE,
                 "deriva_aleatoria": DERIVA,
-                "indicadores_usados": list(
-                    __import__("tabular").INDICADORES
-                ),
+                "indicadores_usados": list(__import__("tabular").INDICADORES),
                 "agente": asdict_safe(cfg),
-                "entorno": {
-                    k: v for k, v in cfg_env.__dict__.items() if not k.startswith("_")
-                },
+                "entorno": {k: v for k, v in cfg_env.__dict__.items() if not k.startswith("_")},
                 "particion": data.PARTICION[mercado],
             },
             indent=2,
