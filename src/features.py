@@ -196,9 +196,25 @@ class Escalador:
 
     @classmethod
     def de_dict(cls, d: dict) -> Escalador:
+        """Restaura el escalador, incluidos los nombres diarios antiguos de Brent."""
+        nombres = tuple(d["nombres"])
+        ventanas = d.get("ventanas", "diario")
+        antiguos = {
+            "ret_5": "ret_corto",
+            "ret_21": "ret_medio",
+            "vol_21": "vol_corta",
+            "dist_sma_21": "dist_sma_corta",
+            "dist_sma_63": "dist_sma_larga",
+            "rsi_14": "rsi",
+            "drawdown_252": "drawdown",
+            "pos_rango_252": "pos_rango",
+        }
+        if ventanas != "diario" and any(n in antiguos for n in nombres):
+            raise ValueError("los nombres antiguos del escalador requieren ventanas diarias")
+        # Cada estadística conserva su posición; solo se traduce el nombre.
         return cls(
             medias=np.asarray(d["medias"], dtype=np.float64),
             desviaciones=np.asarray(d["desviaciones"], dtype=np.float64),
-            nombres=tuple(d["nombres"]),
-            ventanas=d.get("ventanas", "diario"),
+            nombres=tuple(antiguos.get(n, n) for n in nombres),
+            ventanas=ventanas,
         )

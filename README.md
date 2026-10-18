@@ -499,7 +499,7 @@ uv run --locked --extra dev --extra ppo pytest -ra
 `uv sync` crea o actualiza `.venv`. `--locked` exige que `uv.lock` coincida con
 `pyproject.toml` y conserva las versiones resueltas. El extra `dev` incluye las
 herramientas de pruebas y notebooks; `ppo` añade `stable-baselines3`, necesario
-para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 59 pruebas
+para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 63 pruebas
 pasan sin omisiones**.
 
 Para trabajar con DQN y Q-Learning tabular sin instalar PPO:
@@ -509,7 +509,7 @@ uv sync --locked --python 3.12 --extra dev
 uv run --locked --extra dev pytest -ra
 ```
 
-En un entorno sin `stable-baselines3`, se ejecutan **54 pruebas** y se omiten
+En un entorno sin `stable-baselines3`, se ejecutan **58 pruebas** y se omiten
 **5 que requieren esa dependencia**. Las pruebas tabulares se ejecutan en ambos
 casos. Los ejemplos siguientes incluyen ambos extras para asegurar que las
 dependencias de desarrollo y de PPO estén disponibles al ejecutar cada comando.
@@ -534,6 +534,11 @@ corrida se guardan en `results/corridas/<etiqueta>/config.json`. El pipeline usa
 150 000 pasos por defecto; `--pasos 120000` selecciona el presupuesto reportado
 para BTC. Los ejemplos de `train_alt.py` entrenan una semilla; para obtener los
 cinco miembros de cada comité se repiten con `--semilla` de 0 a 4.
+
+`Escalador.de_dict()` acepta los nombres antiguos de los indicadores diarios
+guardados de Brent (por ejemplo, `ret_5` y `vol_21`) y los traduce a los nombres
+actuales. Conserva el orden, las medias y las desviaciones; los archivos
+guardados permanecen intactos. Esos nombres antiguos requieren ventanas diarias.
 
 ### Evaluación final y limitaciones de los comandos actuales
 
@@ -596,13 +601,14 @@ agente-inversor/
 ├── configs/
 │   ├── base.yaml              # configuración de referencia
 │   └── final.yaml             # la del agente reportado en §7, con su justificación
-├── tests/                     # 59 pruebas en 7 archivos; 5 requieren el extra ppo
+├── tests/                     # 63 pruebas en 8 archivos; 5 requieren el extra ppo
 │   ├── test_sin_fuga.py       # ← el que sostiene la honestidad del experimento (los dos mercados)
 │   ├── test_entorno.py        # contabilidad: costos, patrimonio, recompensas, frecuencia
 │   ├── test_baselines.py      # las líneas base son lo que dicen ser
 │   ├── test_agente.py         # DQN, replay, truncación
 │   ├── test_bootstrap.py      # el remuestreo preserva estadística y destruye orden
 │   ├── test_evaluacion_rapida.py  # la tabla Q es la misma política + regresión del error de §8
+│   ├── test_escalador.py      # compatibilidad de formatos y conservación de estados
 │   └── test_agentes_comparados.py # PPO y tabular comparten la interfaz del DQN
 ├── results/                   # BTC: corridas, comité, decisiones y evaluación
 ├── results_brent/             # la réplica del apéndice A
