@@ -27,7 +27,13 @@ from environment import (
 from tabular import INDICADORES, AgenteTabular, ComiteTabular, ConfigTabular
 from test_entorno import serie_sintetica
 
-sb3 = pytest.importorskip("stable_baselines3")
+
+@pytest.fixture(scope="module")
+def requiere_sb3():
+    pytest.importorskip(
+        "stable_baselines3",
+        reason="PPO requiere el extra opcional: uv sync --extra dev --extra ppo",
+    )
 
 
 @pytest.fixture(scope="module")
@@ -37,7 +43,7 @@ def montaje():
     return df, esc
 
 
-def test_el_entorno_pasa_el_verificador_de_stable_baselines3(montaje) -> None:
+def test_el_entorno_pasa_el_verificador_de_stable_baselines3(montaje, requiere_sb3) -> None:
     """El entorno es un Gymnasium válido para un framework externo, no solo
     para nuestro propio código."""
     from stable_baselines3.common.env_checker import check_env
@@ -47,7 +53,7 @@ def test_el_entorno_pasa_el_verificador_de_stable_baselines3(montaje) -> None:
     check_env(env, warn=True)  # lanza si algo no cumple la API
 
 
-def test_la_tabla_de_ppo_da_la_misma_accion_que_predict(montaje) -> None:
+def test_la_tabla_de_ppo_da_la_misma_accion_que_predict(montaje, requiere_sb3) -> None:
     """`tabla_q` de PPO devuelve probabilidades; su argmax tiene que coincidir
     con `model.predict(deterministic=True)`, que es la política determinista
     oficial de SB3. Si no coincidieran, el comité de PPO no sería PPO."""
@@ -66,7 +72,7 @@ def test_la_tabla_de_ppo_da_la_misma_accion_que_predict(montaje) -> None:
             assert int(np.argmax(tabla[t, i])) == int(esperada)
 
 
-def test_las_probabilidades_de_ppo_suman_uno(montaje) -> None:
+def test_las_probabilidades_de_ppo_suman_uno(montaje, requiere_sb3) -> None:
     from ppo import AgentePPO, ConfigPPO
 
     df, esc = montaje
@@ -76,7 +82,7 @@ def test_las_probabilidades_de_ppo_suman_uno(montaje) -> None:
     np.testing.assert_allclose(tabla.sum(axis=-1), 1.0, rtol=1e-5)
 
 
-def test_las_barras_de_calentamiento_quedan_marcadas_no_inventadas(montaje) -> None:
+def test_las_barras_de_calentamiento_quedan_marcadas_no_inventadas(montaje, requiere_sb3) -> None:
     """Antes del primer paso operable los indicadores tienen NaN. La tabla debe
     devolver NaN ahí —no una acción cualquiera— y la política debe negarse a
     decidir si alguna vez se la llamara sobre una de esas barras."""
@@ -161,25 +167,27 @@ def test_el_comite_tabular_promedia_las_tablas(montaje) -> None:
     np.testing.assert_allclose(comite.tabla_q(finitas, EXPOSICIONES), esperado)
 
 
-def test_los_tres_agentes_se_ruedan_con_el_mismo_codigo(montaje) -> None:
+@pytest.mark.parametrize("algoritmo", ["tabular", "ppo"])
+def test_los_tres_agentes_se_ruedan_con_el_mismo_codigo(montaje, algoritmo, request) -> None:
     """La prueba que hace comparable la tabla del informe: el mismo `rodar`,
     la misma contabilidad, para un tabular y para PPO."""
-    from ppo import AgentePPO, ConfigPPO
-
     df, esc = montaje
     cfg = ConfigEntorno(largo_episodio=0, aleatorizar_inicio=False)
 
-    estados = esc.aplicar(features.construir(df["precio"]))
-    finitas = estados[np.isfinite(estados).all(axis=1)]
-    bordes = AgenteTabular.bordes_de_entrenamiento(finitas, cortes=4)
-    tab = AgenteTabular(bordes, cfg=ConfigTabular(cortes=4, semilla=0))
+    if algoritmo == "tabular":
+        estados = esc.aplicar(features.construir(df["precio"]))
+        finitas = estados[np.isfinite(estados).all(axis=1)]
+        bordes = AgenteTabular.bordes_de_entrenamiento(finitas, cortes=4)
+        agente = AgenteTabular(bordes, cfg=ConfigTabular(cortes=4, semilla=0))
+    else:
+        request.getfixturevalue("requiere_sb3")
+        from ppo import AgentePPO, ConfigPPO
 
-    env_base = EntornoInversion(df, esc, ConfigEntorno(largo_episodio=360))
-    ppo = AgentePPO.nuevo(env_base, ConfigPPO(n_steps=180, lote=60, semilla=0))
+        env_base = EntornoInversion(df, esc, ConfigEntorno(largo_episodio=360))
+        agente = AgentePPO.nuevo(env_base, ConfigPPO(n_steps=180, lote=60, semilla=0))
 
-    for agente in (tab, ppo):
-        env = recorrido_completo(df, esc, cfg)
-        bitacora = rodar(env, politica_tabulada(env, agente))
-        assert len(bitacora) > 100
-        assert np.isfinite(bitacora["patrimonio"]).all()
-        assert bitacora["patrimonio"].iloc[-1] > 0
+    env = recorrido_completo(df, esc, cfg)
+    bitacora = rodar(env, politica_tabulada(env, agente))
+    assert len(bitacora) > 100
+    assert np.isfinite(bitacora["patrimonio"]).all()
+    assert bitacora["patrimonio"].iloc[-1] > 0
