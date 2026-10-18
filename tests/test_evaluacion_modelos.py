@@ -24,12 +24,14 @@ def montaje(tmp_path, monkeypatch):
     comite.mkdir(parents=True)
     for nombre in ("semilla_1.pt", "semilla_1.config.json"):
         shutil.copy2(RAIZ / "results" / "comite" / nombre, comite / nombre)
-    carpeta = tmp_path / "corridas" / "f7_final_s1"
+    carpeta = resultados / "corridas" / "f7_final_s1"
     carpeta.mkdir(parents=True)
     original = RAIZ / "results" / "corridas" / carpeta.name
     cfg = json.loads((original / "config.json").read_text(encoding="utf-8"))
     mejor = json.loads((original / "mejor.json").read_text(encoding="utf-8"))
-    monkeypatch.setattr(evaluate, "RESULTADOS", resultados)
+    shutil.copy2(original / "config.json", carpeta / "config.json")
+    shutil.copy2(original / "mejor.json", carpeta / "mejor.json")
+    monkeypatch.setattr(evaluate, "RAIZ", tmp_path)
     return carpeta, cfg, mejor, comite
 
 
@@ -87,24 +89,84 @@ def test_rechaza_un_miembro_que_no_corresponde_al_individuo_elegido(montaje, alt
         evaluate.cargar_individual(carpeta, cfg, mejor)
 
 
-def test_la_evaluacion_completa_reproduce_las_metricas_publicadas(montaje, monkeypatch) -> None:
-    _, _, _, comite = montaje
-    shutil.copytree(RAIZ / "results" / "comite", comite, dirs_exist_ok=True)
-    figuras = comite.parent / "figuras"
+@pytest.mark.parametrize("mercado", ["btc", "brent"])
+def test_la_evaluacion_completa_reproduce_las_metricas_publicadas(
+    tmp_path, monkeypatch, mercado
+) -> None:
+    carpeta_resultados = "results" if mercado == "btc" else "results_brent"
+    originales = RAIZ / carpeta_resultados
+    resultados = tmp_path / carpeta_resultados
+    shutil.copytree(originales / "comite", resultados / "comite")
+    for corrida in originales.glob("corridas/f7_final_s*"):
+        destino = resultados / "corridas" / corrida.name
+        destino.mkdir(parents=True)
+        for archivo in ("config.json", "mejor.json"):
+            shutil.copy2(corrida / archivo, destino / archivo)
+    otro_mercado = tmp_path / ("results_brent" if mercado == "btc" else "results")
+    otro_mercado.mkdir()
+    testigo = otro_mercado / "sin_modificar.txt"
+    testigo.write_text("resultados del otro mercado", encoding="utf-8")
+    figuras = tmp_path / "figuras"
+    figuras.mkdir()
+    sufijo_figura = "prueba" if mercado == "btc" else "brent_prueba"
+    figura_ajena = figuras / (
+        "equity_brent_prueba.png" if mercado == "btc" else "equity_prueba.png"
+    )
+    figura_ajena.write_bytes(b"figura del otro mercado")
+    monkeypatch.setattr(evaluate, "RAIZ", tmp_path)
     monkeypatch.setattr(plots, "FIGURAS", figuras)
 
-    evaluate.evaluar()
+    evaluate.evaluar(mercado=mercado)
 
-    esperado = json.loads((RAIZ / "results/evaluacion_prueba.json").read_text(encoding="utf-8"))
-    generado = json.loads((comite.parent / "evaluacion_prueba.json").read_text(encoding="utf-8"))
+    esperado = json.loads((originales / "evaluacion_prueba.json").read_text(encoding="utf-8"))
+    generado = json.loads((resultados / "evaluacion_prueba.json").read_text(encoding="utf-8"))
+    assert generado["mercado"] == mercado
     assert generado["corrida_elegida_individual"] == esperado["corrida_elegida_individual"]
     assert generado["paso_del_checkpoint"] == esperado["paso_del_checkpoint"]
     assert generado["metricas"] == esperado["metricas"]
     pd.testing.assert_frame_equal(
-        pd.read_csv(comite.parent / "bitacora_dqn_prueba.csv"),
-        pd.read_csv(RAIZ / "results/bitacora_dqn_prueba.csv"),
+        pd.read_csv(resultados / "bitacora_dqn_prueba.csv"),
+        pd.read_csv(originales / "bitacora_dqn_prueba.csv"),
         check_exact=True,
     )
-    assert (comite.parent / "evaluacion_prueba.csv").exists()
-    assert (figuras / "equity_prueba.png").exists()
-    assert (figuras / "exposicion_prueba.png").exists()
+    assert (resultados / "evaluacion_prueba.csv").exists()
+    assert (figuras / f"equity_{sufijo_figura}.png").exists()
+    assert (figuras / f"exposicion_{sufijo_figura}.png").exists()
+    assert list(otro_mercado.iterdir()) == [testigo]
+    assert testigo.read_text(encoding="utf-8") == "resultados del otro mercado"
+    assert figura_ajena.read_bytes() == b"figura del otro mercado"
+
+
+def test_no_usa_los_modelos_de_btc_si_faltan_los_de_brent(montaje) -> None:
+    with pytest.raises(FileNotFoundError, match="results_brent"):
+        evaluate.evaluar(mercado="brent")
+
+
+def test_rechaza_una_corrida_de_otro_mercado(montaje) -> None:
+    carpeta, cfg, _, _ = montaje
+    cfg["mercado"] = "brent"
+    (carpeta / "config.json").write_text(json.dumps(cfg), encoding="utf-8")
+    with pytest.raises(ValueError, match="pertenece al mercado brent"):
+        evaluate.evaluar()
+
+
+@pytest.mark.parametrize("mercado", ["btc", "brent"])
+def test_carga_el_comite_y_selecciona_el_individuo_desde_las_corridas_del_mercado(
+    tmp_path, monkeypatch, mercado
+) -> None:
+    monkeypatch.setattr(evaluate, "RAIZ", tmp_path)
+    for resultados in ("results", "results_brent"):
+        original = RAIZ / resultados
+        destino = tmp_path / resultados / "corridas" / "f7_final_s1"
+        destino.mkdir(parents=True)
+        shutil.copy2(original / "comite/semilla_1.pt", destino / "mejor.pt")
+        shutil.copy2(original / "corridas/f7_final_s1/mejor.json", destino / "mejor.json")
+
+    elegido, _ = evaluate.seleccionar("f7_final_s*", mercado=mercado)
+    comite, miembros = evaluate.cargar_comite("f7_final_s*", mercado=mercado)
+    resultados = "results" if mercado == "btc" else "results_brent"
+    assert elegido == tmp_path / resultados / "corridas" / "f7_final_s1"
+    assert miembros == ["f7_final_s1"]
+    esperado = AgenteDQN.cargar(RAIZ / resultados / "comite/semilla_1.pt")
+    for clave, tensor in esperado.q.state_dict().items():
+        assert torch.equal(comite.agentes[0].q.state_dict()[clave], tensor)

@@ -499,7 +499,7 @@ uv run --locked --extra dev --extra ppo pytest -ra
 `uv sync` crea o actualiza `.venv`. `--locked` exige que `uv.lock` coincida con
 `pyproject.toml` y conserva las versiones resueltas. El extra `dev` incluye las
 herramientas de pruebas y notebooks; `ppo` añade `stable-baselines3`, necesario
-para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 72 pruebas
+para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 77 pruebas
 pasan sin omisiones**.
 
 Para trabajar con DQN y Q-Learning tabular sin instalar PPO:
@@ -509,7 +509,7 @@ uv sync --locked --python 3.12 --extra dev
 uv run --locked --extra dev pytest -ra
 ```
 
-En un entorno sin `stable-baselines3`, se ejecutan **67 pruebas** y se omiten
+En un entorno sin `stable-baselines3`, se ejecutan **72 pruebas** y se omiten
 **5 que requieren esa dependencia**. Las pruebas tabulares se ejecutan en ambos
 casos. Los ejemplos siguientes incluyen ambos extras para asegurar que las
 dependencias de desarrollo y de PPO estén disponibles al ejecutar cada comando.
@@ -540,29 +540,41 @@ guardados de Brent (por ejemplo, `ret_5` y `vol_21`) y los traduce a los nombres
 actuales. Conserva el orden, las medias y las desviaciones; los archivos
 guardados permanecen intactos. Esos nombres antiguos requieren ventanas diarias.
 
-### Evaluación final y limitaciones de los comandos actuales
+### Evaluación final por mercado
 
 ```bash
 uv run --locked --extra dev --extra ppo python src/baselines.py --tramo prueba
 uv run --locked --extra dev --extra ppo python src/evaluate.py
+uv run --locked --extra dev --extra ppo python src/evaluate.py --mercado brent
 ```
 
 La evaluación lee el tramo de prueba: la configuración y los modelos deben
-quedar fijados antes de ejecutarla. Los cinco miembros del comité de BTC están
-incluidos en `results/comite/`. Para el mejor individuo, `evaluate.py` usa
-`results/corridas/<corrida>/mejor.pt` si existe; si falta, recupera
-`results/comite/semilla_<semilla>.pt` y comprueba que su configuración y paso
-de entrenamiento correspondan al individuo elegido. Esa recuperación requiere
-también el archivo `semilla_<semilla>.config.json` y falla con un mensaje
-explícito si el respaldo falta o no corresponde. Así, la evaluación de BTC
-puede completarse con los modelos incluidos, sin volver a entrenar. Las métricas
-ya calculadas están en `results/evaluacion_prueba.json` y su CSV correspondiente.
+quedar fijados antes de ejecutarla. En `evaluate.py`, `--mercado` selecciona
+conjuntamente los datos, las corridas candidatas, el comité y la carpeta de salida:
 
-`train.py` admite `--mercado brent`. En `evaluate.py`, ese argumento cambia los
-datos, pero las rutas de modelos y salidas siguen apuntando a `results/`;
-**no selecciona los artefactos de `results_brent/`**. La réplica guardada debe
-consultarse en esa carpeta; el comando de evaluación requiere adaptar sus rutas
-para reproducirla con los modelos de Brent.
+| Mercado | Corridas | Comité incluido | Tablas, JSON y bitácoras |
+|---|---|---|---|
+| `btc` (por defecto) | `results/corridas/` | `results/comite/` | `results/` |
+| `brent` | `results_brent/corridas/` | `results_brent/comite/` | `results_brent/` |
+
+Para el mejor individuo, el evaluador usa `corridas/<corrida>/mejor.pt` dentro
+de la carpeta del mercado si existe; si falta, recupera
+`comite/semilla_<semilla>.pt` y comprueba que su configuración y paso de
+entrenamiento correspondan al individuo elegido. Esa recuperación requiere
+también el archivo `semilla_<semilla>.config.json` y falla con un mensaje
+explícito si el respaldo falta o no corresponde. La evaluación de ambos mercados
+puede completarse con los modelos incluidos, sin volver a entrenar. Si faltan
+los modelos del mercado solicitado, se informa del error sin usar los de otro.
+
+Con la etiqueta predeterminada `prueba`, las salidas se llaman
+`evaluacion_prueba.csv`, `evaluacion_prueba.json` y `bitacora_dqn_prueba.csv`
+dentro de la carpeta del mercado. Las figuras quedan en `figuras/`: BTC genera
+`equity_prueba.png` y `exposicion_prueba.png`; Brent genera
+`equity_brent_prueba.png` y `exposicion_brent_prueba.png`.
+
+Estas rutas corresponden al evaluador. Los scripts de entrenamiento guardan en
+`results/corridas/`; para evaluar nuevas corridas de Brent, sus artefactos deben
+estar en `results_brent/corridas/`.
 
 ### El dataset, identificado
 
@@ -604,13 +616,13 @@ agente-inversor/
 ├── configs/
 │   ├── base.yaml              # configuración de referencia
 │   └── final.yaml             # la del agente reportado en §7, con su justificación
-├── tests/                     # 72 pruebas en 9 archivos; 5 requieren el extra ppo
+├── tests/                     # 77 pruebas en 9 archivos; 5 requieren el extra ppo
 │   ├── test_sin_fuga.py       # ← el que sostiene la honestidad del experimento (los dos mercados)
 │   ├── test_entorno.py        # contabilidad: costos, patrimonio, recompensas, frecuencia
 │   ├── test_baselines.py      # las líneas base son lo que dicen ser
 │   ├── test_agente.py         # DQN, replay, truncación
 │   ├── test_bootstrap.py      # el remuestreo preserva estadística y destruye orden
-│   ├── test_evaluacion_modelos.py # carga de respaldos y evaluación completa de BTC
+│   ├── test_evaluacion_modelos.py # respaldos y evaluación de BTC y Brent por separado
 │   ├── test_evaluacion_rapida.py  # la tabla Q es la misma política + regresión del error de §8
 │   ├── test_escalador.py      # compatibilidad de formatos y conservación de estados
 │   └── test_agentes_comparados.py # PPO y tabular comparten la interfaz del DQN

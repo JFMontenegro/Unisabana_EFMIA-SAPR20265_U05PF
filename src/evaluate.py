@@ -33,10 +33,16 @@ import metrics
 import plots
 from agent import AgenteDQN
 from environment import ConfigEntorno
-from train import CORRIDAS, montar
+from train import montar
 
 RAIZ = Path(__file__).resolve().parents[1]
-RESULTADOS = RAIZ / "results"
+
+
+def directorio_resultados(mercado: str) -> Path:
+    """Carpeta de modelos y resultados correspondiente a un único mercado."""
+    if mercado not in data.FUENTES:
+        raise ValueError(f"mercado desconocido: {mercado}")
+    return RAIZ / ("results" if mercado == "btc" else f"results_{mercado}")
 
 
 class Comite:
@@ -79,23 +85,25 @@ class Comite:
         return np.mean([a.tabla_q(estados, exposiciones) for a in self.agentes], axis=0)
 
 
-def cargar_comite(patron: str) -> tuple[Comite, list[str]]:
-    """Carga los miembros del comité desde las corridas, o desde `results/comite/`.
+def cargar_comite(patron: str, mercado: str = "btc") -> tuple[Comite, list[str]]:
+    """Carga el comité desde las corridas o los pesos incluidos del mercado.
 
     Los pesos de las corridas intermedias no se versionan (son muchos y pesan);
-    los cinco del comité sí, en `results/comite/`. Así alguien que clone el
-    repositorio puede reproducir la tabla de §7 sin volver a entrenar.
+    los cinco del comité sí, en `comite/` dentro de la carpeta del mercado.
+    Así alguien que clone el repositorio puede evaluar sin volver a entrenar.
     """
-    carpetas = [c for c in sorted(CORRIDAS.glob(patron)) if (c / "mejor.pt").exists()]
+    resultados = directorio_resultados(mercado)
+    corridas = resultados / "corridas"
+    carpetas = [c for c in sorted(corridas.glob(patron)) if (c / "mejor.pt").exists()]
     if carpetas:
         agentes = [AgenteDQN.cargar(c / "mejor.pt") for c in carpetas]
         return Comite(agentes), [c.name for c in carpetas]
 
-    guardados = sorted((RESULTADOS / "comite").glob("semilla_*.pt"))
+    guardados = sorted((resultados / "comite").glob("semilla_*.pt"))
     if not guardados:
         raise FileNotFoundError(
-            f"ninguna corrida casa con '{patron}' y results/comite/ está vacío; "
-            "corre `python src/pipeline.py` primero"
+            f"ninguna corrida casa con '{patron}' en {corridas} "
+            f"y {resultados / 'comite'} no contiene modelos de {mercado}"
         )
     return Comite([AgenteDQN.cargar(p) for p in guardados]), [p.stem for p in guardados]
 
@@ -106,7 +114,8 @@ def cargar_individual(carpeta: Path, cfg_corrida: dict, mejor_val: dict) -> Agen
     if ruta_corrida.exists():
         return AgenteDQN.cargar(ruta_corrida)
 
-    ruta_comite = RESULTADOS / "comite" / f"semilla_{cfg_corrida['semilla']}.pt"
+    resultados = directorio_resultados(cfg_corrida["mercado"])
+    ruta_comite = resultados / "comite" / f"semilla_{cfg_corrida['semilla']}.pt"
     ruta_config = ruta_comite.with_suffix(".config.json")
     if not ruta_comite.exists() or not ruta_config.exists():
         raise FileNotFoundError(
@@ -131,16 +140,17 @@ def cargar_individual(carpeta: Path, cfg_corrida: dict, mejor_val: dict) -> Agen
     return agente
 
 
-def seleccionar(patron: str, tramo: str = "prueba") -> tuple[Path, dict]:
+def seleccionar(patron: str, tramo: str = "prueba", mercado: str = "btc") -> tuple[Path, dict]:
     """Elige la corrida con mejor retorno en validación. Único criterio."""
     candidatos = []
-    for carpeta in sorted(CORRIDAS.glob(patron)):
+    corridas = directorio_resultados(mercado) / "corridas"
+    for carpeta in sorted(corridas.glob(patron)):
         archivo = carpeta / "mejor.json"
         if archivo.exists():
             d = json.loads(archivo.read_text(encoding="utf-8"))
             candidatos.append((carpeta, d))
     if not candidatos:
-        raise FileNotFoundError(f"ninguna corrida casa con '{patron}' en {CORRIDAS}")
+        raise FileNotFoundError(f"ninguna corrida casa con '{patron}' en {corridas}")
 
     candidatos.sort(key=lambda par: par[1]["retorno_acumulado"], reverse=True)
     print(f"Candidatos ({len(candidatos)}), ordenados por retorno en VALIDACIÓN:")
@@ -166,8 +176,14 @@ def evaluar(
     semillas_aleatorias: int = 30,
     etiqueta_salida: str = "prueba",
 ) -> pd.DataFrame:
-    carpeta, mejor_val = seleccionar(patron, tramo)
+    resultados = directorio_resultados(mercado)
+    carpeta, mejor_val = seleccionar(patron, tramo, mercado)
     cfg_corrida = json.loads((carpeta / "config.json").read_text(encoding="utf-8"))
+    if cfg_corrida["mercado"] != mercado:
+        raise ValueError(
+            f"la corrida {carpeta.name} pertenece al mercado {cfg_corrida['mercado']}, "
+            f"pero se solicitó evaluar {mercado}"
+        )
 
     tramos, escalador = montar(mercado, incluir_prueba=True)
     precios = tramos[tramo]
@@ -189,7 +205,7 @@ def evaluar(
 
     from environment import politica_tabulada, recorrido_completo, rodar
 
-    comite, miembros = cargar_comite(patron)
+    comite, miembros = cargar_comite(patron, mercado)
     print(f"Comité de {len(miembros)} agentes: {', '.join(miembros)}")
     print("El 'DQN' que reporta el informe es el comité (decidido antes de leer prueba).\n")
 
@@ -238,12 +254,13 @@ def evaluar(
     tabla = metrics.tabla(resumenes)
     legible = metrics.formatear(tabla)
 
-    RESULTADOS.mkdir(parents=True, exist_ok=True)
-    tabla.to_csv(RESULTADOS / f"evaluacion_{etiqueta_salida}.csv")
-    bitacora_dqn.to_csv(RESULTADOS / f"bitacora_dqn_{etiqueta_salida}.csv")
-    (RESULTADOS / f"evaluacion_{etiqueta_salida}.json").write_text(
+    resultados.mkdir(parents=True, exist_ok=True)
+    tabla.to_csv(resultados / f"evaluacion_{etiqueta_salida}.csv")
+    bitacora_dqn.to_csv(resultados / f"bitacora_dqn_{etiqueta_salida}.csv")
+    (resultados / f"evaluacion_{etiqueta_salida}.json").write_text(
         json.dumps(
             {
+                "mercado": mercado,
                 "modelo_principal": "comité de los agentes de la fase final",
                 "miembros_del_comite": miembros,
                 "corrida_elegida_individual": carpeta.name,
@@ -268,16 +285,17 @@ def evaluar(
     )
 
     curvas = {"DQN": bitacora_dqn, "DQN (mejor semilla)": bitacora_individual, **fijas}
+    sufijo_figura = etiqueta_salida if mercado == "btc" else f"{mercado}_{etiqueta_salida}"
     plots.curvas_de_patrimonio(
         {k: v for k, v in curvas.items() if k != "Todo en efectivo"},
         aleatorias,
         titulo=f"Patrimonio en el período de prueba ({precios.index[env.primer_paso].date()} → {precios.index[-1].date()})",
-        nombre=f"equity_{etiqueta_salida}.png",
+        nombre=f"equity_{sufijo_figura}.png",
     )
     plots.exposicion_y_precio(
         bitacora_dqn,
         precios["precio"],
-        nombre=f"exposicion_{etiqueta_salida}.png",
+        nombre=f"exposicion_{sufijo_figura}.png",
     )
 
     print(legible.to_string())
@@ -314,7 +332,7 @@ def valores_q_medios(agente: AgenteDQN, env) -> np.ndarray:
 def main() -> None:
     p = argparse.ArgumentParser(description="Evaluación final en el período held-out")
     p.add_argument("--patron", default="f7_final_s*", help="glob de corridas candidatas")
-    p.add_argument("--mercado", default="btc")
+    p.add_argument("--mercado", default="btc", choices=list(data.FUENTES))
     p.add_argument("--tramo", default="prueba", choices=["validacion", "prueba"])
     p.add_argument("--semillas-aleatorias", type=int, default=30)
     p.add_argument("--etiqueta", default=None)
