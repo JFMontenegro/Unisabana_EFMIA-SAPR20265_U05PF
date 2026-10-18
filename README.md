@@ -468,6 +468,14 @@ El segundo lo encontré tarde y por casualidad. `recorrido_completo` construía 
 Ninguna de estas cosas la puedo probar con estos datos sin invalidar el experimento. Esa restricción —no poder usar al final lo que aprendí sobre datos que ya miré— es la parte del método que más me costó respetar, y la que separa un resultado de una anécdota.
 
 ---
+**Joan Montenegro**  
+**reproducir un resultado también forma parte importante de un proyecto** 
+
+La revisión del repositorio me permitió entender que la reproducibilidad depende de más elementos que las semillas aleatorias. También requiere que otra persona pueda instalar las dependencias, localizar los modelos y ejecutar la evaluación siguiendo las instrucciones disponibles.
+
+Un caso que me llamó la atención fue que las pruebas podían terminar sin errores aunque algunas no se hubieran ejecutado por falta de una dependencia. Esto me llevó a distinguir entre una ejecución exitosa y una verificación completa. También encontramos modelos incluidos en el repositorio que un evaluador no podía recuperar porque los buscaba en otra ubicación.
+
+Estos problemas no cambiaban lo aprendido por los agentes, pero dificultaban comprobar sus resultados. Si repitiera el proyecto, incorporaría una revisión desde un entorno limpio antes de entregar: instalar el proyecto, ejecutar las pruebas y regenerar la evaluación únicamente con los archivos publicados. Considero que esa comprobación debería acompañar la evaluación del modelo, porque permite que el trabajo pueda ser utilizado y revisado por otras personas.
 
 ## 9. Limitaciones
 
@@ -480,6 +488,21 @@ Declaradas, no escondidas. Cada una acota hasta dónde llega la conclusión de �
 5. **Selección por validación sobre ~12 evaluaciones por corrida.** El checkpoint de cada miembro del comité se eligió por su mejor punto en validación. Eso introduce optimismo en las cifras de validación de §6 — no en las de prueba, que son limpias.
 6. **Costos simplificados.** 10 bps fijos sobre la rotación, sin modelar deslizamiento, impacto de mercado ni el diferencial compra-venta, y con el efectivo remunerado al 0 %. En BTC la cifra coincide con la comisión *taker* de Binance, así que es realista para el tamaño de orden pequeño; para órdenes grandes sería optimista.
 7. **El estado no usa volumen ni datos de libro de órdenes.** Fue deliberado (§1), pero significa que el agente opera con menos información de la que tendría un sistema real.
+
+### Mejora pendiente para próximos entrenamientos: escala de la deriva
+
+Una revisión posterior identificó un problema en la deriva, la tendencia media
+añadida a las trayectorias sintéticas de entrenamiento. EntornoBootstrap
+convierte la deriva anual a cada barra dividiendo entre 252. Esa conversión
+corresponde al Brent diario, pero BTC horario tiene 8 760 barras al año. Por
+ello, el aporte de la deriva por hora queda amplificado unas 34,8 veces.
+
+**La corrección está pendiente:** utilizar las barras anuales de cada mercado y
+añadir una prueba que verifique la conversión. Para medir su efecto será
+necesario entrenar nuevos modelos y compararlos manteniendo las demás
+condiciones. Los resultados publicados corresponden a la implementación
+histórica; el impacto de este problema sobre su desempeño todavía no se ha
+cuantificado.
 
 ---
 
