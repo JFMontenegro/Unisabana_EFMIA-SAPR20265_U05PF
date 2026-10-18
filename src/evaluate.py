@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import numpy as np
@@ -100,6 +100,37 @@ def cargar_comite(patron: str) -> tuple[Comite, list[str]]:
     return Comite([AgenteDQN.cargar(p) for p in guardados]), [p.stem for p in guardados]
 
 
+def cargar_individual(carpeta: Path, cfg_corrida: dict, mejor_val: dict) -> AgenteDQN:
+    """Recupera el individuo elegido, usando su copia del comité si hace falta."""
+    ruta_corrida = carpeta / "mejor.pt"
+    if ruta_corrida.exists():
+        return AgenteDQN.cargar(ruta_corrida)
+
+    ruta_comite = RESULTADOS / "comite" / f"semilla_{cfg_corrida['semilla']}.pt"
+    ruta_config = ruta_comite.with_suffix(".config.json")
+    if not ruta_comite.exists() or not ruta_config.exists():
+        raise FileNotFoundError(
+            f"no existe {ruta_corrida}; para recuperar el individuo del comité "
+            f"se necesitan {ruta_comite} y {ruta_config}"
+        )
+    cfg_comite = json.loads(ruta_config.read_text(encoding="utf-8"))
+    if cfg_comite != cfg_corrida:
+        raise ValueError(
+            f"la configuración de {ruta_comite} no coincide con la corrida {carpeta.name}"
+        )
+
+    agente = AgenteDQN.cargar(ruta_comite)
+    if asdict(agente.cfg) != cfg_corrida["agente"]:
+        raise ValueError(f"los hiperparámetros de los pesos en {ruta_comite} no coinciden")
+    if agente.pasos != mejor_val["paso"]:
+        raise ValueError(
+            f"el checkpoint de {ruta_comite} tiene {agente.pasos} pasos; "
+            f"se esperaba el paso {mejor_val['paso']}"
+        )
+    print(f"Modelo individual recuperado desde {ruta_comite}")
+    return agente
+
+
 def seleccionar(patron: str, tramo: str = "prueba") -> tuple[Path, dict]:
     """Elige la corrida con mejor retorno en validación. Único criterio."""
     candidatos = []
@@ -165,7 +196,7 @@ def evaluar(
     env = recorrido_completo(precios, escalador, cfg_env)
     bitacora_dqn = rodar(env, politica_tabulada(env, comite))
 
-    agente_individual = AgenteDQN.cargar(carpeta / "mejor.pt")
+    agente_individual = cargar_individual(carpeta, cfg_corrida, mejor_val)
     env_ind = recorrido_completo(precios, escalador, cfg_env)
     bitacora_individual = rodar(env_ind, politica_tabulada(env_ind, agente_individual))
 
@@ -220,7 +251,10 @@ def evaluar(
                 "valor_en_validacion": mejor_val["retorno_acumulado"],
                 "paso_del_checkpoint": mejor_val["paso"],
                 "tramo_evaluado": tramo,
-                "rango": [str(precios.index[env.primer_paso].date()), str(precios.index[-1].date())],
+                "rango": [
+                    str(precios.index[env.primer_paso].date()),
+                    str(precios.index[-1].date()),
+                ],
                 "config": cfg_corrida["agente"],
                 "recompensa": cfg_corrida["recompensa"],
                 "bootstrap": cfg_corrida.get("bootstrap"),
@@ -252,7 +286,9 @@ def evaluar(
     print("Reparto de exposición del DQN:")
     for nivel, frac in reparto.items():
         print(f"  {100 * nivel:5.0f} %  →  {100 * frac:5.1f} % de las barras")
-    print(f"\nValores Q medios (mejor semilla): {np.round(valores_q_medios(agente_individual, env), 3)}")
+    print(
+        f"\nValores Q medios (mejor semilla): {np.round(valores_q_medios(agente_individual, env), 3)}"
+    )
     return tabla
 
 

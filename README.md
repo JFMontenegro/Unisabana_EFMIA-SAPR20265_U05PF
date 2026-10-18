@@ -499,7 +499,7 @@ uv run --locked --extra dev --extra ppo pytest -ra
 `uv sync` crea o actualiza `.venv`. `--locked` exige que `uv.lock` coincida con
 `pyproject.toml` y conserva las versiones resueltas. El extra `dev` incluye las
 herramientas de pruebas y notebooks; `ppo` añade `stable-baselines3`, necesario
-para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 63 pruebas
+para entrenar PPO y ejecutar sus pruebas. Con ambos extras, **las 72 pruebas
 pasan sin omisiones**.
 
 Para trabajar con DQN y Q-Learning tabular sin instalar PPO:
@@ -509,7 +509,7 @@ uv sync --locked --python 3.12 --extra dev
 uv run --locked --extra dev pytest -ra
 ```
 
-En un entorno sin `stable-baselines3`, se ejecutan **58 pruebas** y se omiten
+En un entorno sin `stable-baselines3`, se ejecutan **67 pruebas** y se omiten
 **5 que requieren esa dependencia**. Las pruebas tabulares se ejecutan en ambos
 casos. Los ejemplos siguientes incluyen ambos extras para asegurar que las
 dependencias de desarrollo y de PPO estén disponibles al ejecutar cada comando.
@@ -549,11 +549,14 @@ uv run --locked --extra dev --extra ppo python src/evaluate.py
 
 La evaluación lee el tramo de prueba: la configuración y los modelos deben
 quedar fijados antes de ejecutarla. Los cinco miembros del comité de BTC están
-incluidos en `results/comite/`. Sin embargo, `evaluate.py` carga además el
-mejor individuo desde `results/corridas/<corrida>/mejor.pt`: **si falta ese
-archivo, el comando falla con `FileNotFoundError`**, aunque haya podido cargar
-el comité. Los pesos intermedios no se versionan. Las métricas ya calculadas
-están en `results/evaluacion_prueba.json` y su CSV correspondiente.
+incluidos en `results/comite/`. Para el mejor individuo, `evaluate.py` usa
+`results/corridas/<corrida>/mejor.pt` si existe; si falta, recupera
+`results/comite/semilla_<semilla>.pt` y comprueba que su configuración y paso
+de entrenamiento correspondan al individuo elegido. Esa recuperación requiere
+también el archivo `semilla_<semilla>.config.json` y falla con un mensaje
+explícito si el respaldo falta o no corresponde. Así, la evaluación de BTC
+puede completarse con los modelos incluidos, sin volver a entrenar. Las métricas
+ya calculadas están en `results/evaluacion_prueba.json` y su CSV correspondiente.
 
 `train.py` admite `--mercado brent`. En `evaluate.py`, ese argumento cambia los
 datos, pero las rutas de modelos y salidas siguen apuntando a `results/`;
@@ -601,12 +604,13 @@ agente-inversor/
 ├── configs/
 │   ├── base.yaml              # configuración de referencia
 │   └── final.yaml             # la del agente reportado en §7, con su justificación
-├── tests/                     # 63 pruebas en 8 archivos; 5 requieren el extra ppo
+├── tests/                     # 72 pruebas en 9 archivos; 5 requieren el extra ppo
 │   ├── test_sin_fuga.py       # ← el que sostiene la honestidad del experimento (los dos mercados)
 │   ├── test_entorno.py        # contabilidad: costos, patrimonio, recompensas, frecuencia
 │   ├── test_baselines.py      # las líneas base son lo que dicen ser
 │   ├── test_agente.py         # DQN, replay, truncación
 │   ├── test_bootstrap.py      # el remuestreo preserva estadística y destruye orden
+│   ├── test_evaluacion_modelos.py # carga de respaldos y evaluación completa de BTC
 │   ├── test_evaluacion_rapida.py  # la tabla Q es la misma política + regresión del error de §8
 │   ├── test_escalador.py      # compatibilidad de formatos y conservación de estados
 │   └── test_agentes_comparados.py # PPO y tabular comparten la interfaz del DQN
