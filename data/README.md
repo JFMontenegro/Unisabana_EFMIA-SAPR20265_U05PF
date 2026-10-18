@@ -4,10 +4,11 @@ Esta carpeta queda **vacía en el repositorio a propósito**. Las series de prec
 versionan: `.gitignore` excluye `data/*.csv` porque los archivos de origen se actualizan
 (el de Brent crece cada día) y versionarlos ensuciaría cada diff con ruido.
 
-Para llenarla:
+Para llenarla, desde la raíz del proyecto y después de la instalación con `uv`
+descrita en el README principal:
 
 ```bash
-python src/data.py
+uv run --locked --extra dev --extra ppo python src/data.py
 ```
 
 Eso baja y valida las tres series, y escribe aquí:
